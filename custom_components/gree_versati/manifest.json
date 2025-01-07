@@ -1,0 +1,12 @@
+{
+  "domain": "gree_versati",
+  "name": "Gree Versati",
+  "codeowners": [
+    "@roihuvaara"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/roihuvaara/hacs_gree_versati",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/roihuvaara/hacs_gree_versati/issues",
+  "version": "0.1.0"
+}
