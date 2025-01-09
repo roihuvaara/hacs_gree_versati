@@ -1,16 +1,10 @@
-"""Sample API Client."""
-
 from __future__ import annotations
 
-import socket
 from typing import Any
 
 from greeclimate.awhp_device import AwhpDevice
 from greeclimate.base_device import DeviceInfo
 from greeclimate.discovery import Discovery, Listener
-
-import aiohttp
-import async_timeout
 
 from .const import LOGGER
 
@@ -39,6 +33,10 @@ class GreeVersatiClient:
     device: AwhpDevice
 
     
+    async def async_get_data(self) -> Any:
+        """Fetch data from the device."""
+        return self.device.hot_water_temp()
+
     async def run_discovery(self, bind=False):
         """Run the device discovery process."""
         LOGGER.debug("Scanning network for Gree devices")

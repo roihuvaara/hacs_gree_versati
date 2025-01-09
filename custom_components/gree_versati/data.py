@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import GreeVersatiApiClient
-    from .coordinator import BlueprintDataUpdateCoordinator
+    from .client import GreeVersatiClient
+    from .coordinator import GreeVersatiDataUpdateCoordinator
 
 
 type GreeVersatiConfigEntry = ConfigEntry[GreeVersatiData]
@@ -18,8 +18,8 @@ type GreeVersatiConfigEntry = ConfigEntry[GreeVersatiData]
 
 @dataclass
 class GreeVersatiData:
-    """Data for the Blueprint integration."""
+    """Data for the Gree Versati integration."""
 
-    client: GreeVersatiApiClient
-    coordinator: BlueprintDataUpdateCoordinator
+    client: GreeVersatiClient
+    coordinator: GreeVersatiDataUpdateCoordinator
     integration: Integration

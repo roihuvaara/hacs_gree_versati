@@ -4,20 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
+# from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-
-from .api import (
-    GreeVersatiApiClientAuthenticationError,
-    GreeVersatiApiClientError,
-)
 
 if TYPE_CHECKING:
     from .data import GreeVersatiConfigEntry
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class BlueprintDataUpdateCoordinator(DataUpdateCoordinator):
+class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
     config_entry: GreeVersatiConfigEntry
@@ -26,7 +21,5 @@ class BlueprintDataUpdateCoordinator(DataUpdateCoordinator):
         """Update data via library."""
         try:
             return await self.config_entry.runtime_data.client.async_get_data()
-        except GreeVersatiApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except GreeVersatiApiClientError as exception:
-            raise UpdateFailed(exception) from exception
+        except:
+            raise UpdateFailed()
