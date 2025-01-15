@@ -25,7 +25,7 @@ ENTITY_DESCRIPTIONS = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001 Unused function argument: `hass`
+    hass: HomeAssistant,
     entry: GreeVersatiConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
