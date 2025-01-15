@@ -4,11 +4,10 @@
   "codeowners": [
     "@roihuvaara"
   ],
-  "config_flow": true,
+  "config_flow": false,
   "documentation": "https://github.com/roihuvaara/hacs_gree_versati",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/roihuvaara/hacs_gree_versati/issues",
-  "version": "0.1.0",
-  "requirements": ["greeclimate @ git+https://github.com/roihuvaara/greeclimate@versati-nordic-awhp"]
-
+  "requirements": ["greeclimate@git+https://github.com/roihuvaara/greeclimate@versati-nordic-awhp"],
+  "version": "0.1.1"
 }

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-# from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 if TYPE_CHECKING:
@@ -22,4 +21,4 @@ class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             return await self.config_entry.runtime_data.client.async_get_data()
         except:
-            raise UpdateFailed()
+            raise UpdateFailed from None
