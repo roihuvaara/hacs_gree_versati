@@ -2,57 +2,61 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import asyncio
+import logging
+from typing import TYPE_CHECKING, List
 
 from greeclimate.awhp_device import AwhpDevice
-from greeclimate.discovery import Discovery, Listener
+from greeclimate.discovery import Discovery
+from .discovery_listener import DiscoveryListener
 
 from .const import LOGGER
 
 if TYPE_CHECKING:
     from greeclimate.base_device import DeviceInfo
 
-
-class DiscoveryListener(Listener):
-    """Handle incoming device discovery events."""
-
-    device: AwhpDevice
-
-    def __init__(self) -> None:
-        """Initialize the event handler."""
-        super().__init__()
-        self.bind = True
-
-    async def device_found(self, device_info: DeviceInfo) -> None:
-        """Found a new device on the network."""
-        if self.bind:
-            self.device = AwhpDevice(device_info)
-            await self.device.bind()
-            await self.device.request_version()
-            LOGGER.info(f"Device firmware: {self.device.hid}")
-
-    def get_device(self) -> AwhpDevice:
-        """Get the device that was discovered."""
-        return self.device
-
+LOGGER = logging.getLogger(__name__)
 
 class GreeVersatiClient:
-    """Facade class to manage fetching data from the greeclimate lib."""
+    """Facade class to manage communication with the device."""
+    
+    def __init__(
+        self,
+        ip: str | None = None,
+        port: int | None = None,
+        mac: str | None = None,
+        key: str | None = None,
+        loop: asyncio.AbstractEventLoop | None = None,
+    ) -> None:
+        self.loop = loop or asyncio.get_event_loop()
+        self.ip = ip
+        self.port = port
+        self.mac = mac
+        self.key = key
+        self.device: AwhpDevice | None = None
 
-    device: AwhpDevice
-
-    async def async_get_data(self) -> Any:
+    async def async_get_data(self) -> any:
         """Fetch data from the device."""
+        if self.device is None:
+            raise Exception("Device not initialized")
         return self.device.hot_water_temp()
 
-    async def run_discovery(self) -> None:
-        """Run the device discovery process."""
-        LOGGER.debug("Scanning network for Gree devices")
+    async def run_discovery(self) -> List[AwhpDevice]:
+        """
+        Run the device discovery process.
 
+        This method creates a DiscoveryListener, adds it to a Discovery instance,
+        waits for the scan to finish, and returns a list containing the discovered device (if any).
+        """
+        LOGGER.debug("Scanning network for Gree devices")
         discovery = Discovery()
         listener = DiscoveryListener()
         discovery.add_listener(listener)
 
-        await discovery.scan(wait_for=10)
+        await discovery.scan(wait_for=10)  # Wait for 10 seconds (or adjust as needed)
         LOGGER.info("Done discovering devices")
-        self.device = listener.get_device()
+        
+        device = listener.get_device()
+        if device:
+            return [device]
+        return []

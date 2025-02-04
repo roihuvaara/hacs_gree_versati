@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING
 
 # from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.const import Platform
-from homeassistant.exceptions import PlatformNotReady
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_IP, CONF_PORT, CONF_MAC, CONF_NAME
+from homeassistant.core import HomeAssistant
 
-# from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.loader import async_get_loaded_integration
 
 from .client import GreeVersatiClient
 from .const import DOMAIN, LOGGER
@@ -37,63 +37,81 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the platform."""
-    client = GreeVersatiClient()
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """
+    Set up the integration from YAML if present.
+    
+    Since we are using a config flow (UI based configuration), this function only ensures
+    that the integration's data container exists.
+    """
+    hass.data.setdefault(DOMAIN, {})
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """
+    Set up the Gree Versati integration from a config entry.
+    
+    The config entry is expected to contain:
+      - CONF_IP: the device's IP address
+      - CONF_PORT: the device's port (usually 7000)
+      - CONF_MAC: the device's MAC address
+      - CONF_NAME: the device name (or a fallback value)
+      - "key": the negotiated binding key
+    """
+    ip = entry.data[CONF_IP]
+    port = entry.data[CONF_PORT]
+    mac = entry.data[CONF_MAC]
+    name = entry.data[CONF_NAME]
+    key = entry.data["key"]
+
+    # Create the client using the stored connection parameters and key.
+    client = GreeVersatiClient(ip=ip, port=port, mac=mac, key=key)
+
     try:
-        await client.run_discovery()
-    except ConnectionError:
-        raise PlatformNotReady("err") from None
+        # Initialize the client (this will create the device instance and bind it using the stored key).
+        await client.initialize()
+    except Exception as exc:
+        LOGGER.error("Failed to initialize device '%s' (%s): %s", name, mac, exc)
+        return False
 
-
-# https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: GreeVersatiConfigEntry,
-) -> bool:
-    """Set up this integration using UI."""
+    # Set up the data update coordinator that will periodically fetch data from the device.
     coordinator = GreeVersatiDataUpdateCoordinator(
         hass=hass,
         logger=LOGGER,
         name=DOMAIN,
         update_interval=timedelta(seconds=5),
-    )
-    entry.runtime_data = GreeVersatiData(
-        client=GreeVersatiClient(),
-        integration=async_get_loaded_integration(hass, entry.domain),
-        coordinator=coordinator,
+        client=client,
     )
 
     try:
-        # Find devices and bind
-        await entry.runtime_data.client.run_discovery()
-        return True
-    except:
+        # Perform an initial data refresh. If this fails, the setup will be retried later.
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as exc:
+        LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
         return False
-    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    # await coordinator.async_config_entry_first_refresh()
 
-    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    # entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    # Store the client and coordinator in hass.data for use by your platform code.
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+        "client": client,
+        "coordinator": coordinator,
+    }
+
+    # Forward the config entry setup to the supported platforms (e.g. sensor and device).
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    )
+
+    return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant,
-    entry: GreeVersatiConfigEntry,
-) -> bool:
-    """Handle removal of an entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """
+    Unload a config entry.
 
-
-async def async_reload_entry(
-    hass: HomeAssistant,
-    entry: GreeVersatiConfigEntry,
-) -> None:
-    """Reload config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+    This function unloads the platforms and removes the integration's stored data.
+    """
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id)
+    return unload_ok
