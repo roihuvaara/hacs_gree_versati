@@ -1,6 +1,6 @@
-from greeclimate.awhp_device import AwhpDevice
-from greeclimate.base_device import DeviceInfo
-from greeclimate.discovery import Listener
+from greeclimate_versati_fork.awhp_device import AwhpDevice
+from greeclimate_versati_fork.base_device import DeviceInfo
+from greeclimate_versati_fork.discovery import Listener
 
 import logging
 

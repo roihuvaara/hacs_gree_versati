@@ -6,14 +6,14 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, List
 
-from greeclimate.awhp_device import AwhpDevice
-from greeclimate.discovery import Discovery
+from greeclimate_versati_fork.awhp_device import AwhpDevice
+from greeclimate_versati_fork.discovery import Discovery
 from .discovery_listener import DiscoveryListener
 
 from .const import LOGGER
 
 if TYPE_CHECKING:
-    from greeclimate.base_device import DeviceInfo
+    from greeclimate_versati_fork.base_device import DeviceInfo
 
 LOGGER = logging.getLogger(__name__)
 
