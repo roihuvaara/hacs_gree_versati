@@ -2,10 +2,9 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_IP, CONF_PORT, CONF_MAC, CONF_NAME
-
+from homeassistant.const import CONF_PORT, CONF_MAC, CONF_NAME
+from .const import DOMAIN, CONF_IP
 from .client import GreeVersatiClient
-from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,11 +15,7 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input=None):
-        """
-        The initial step that the user sees.
-
-        Here we trigger a discovery of devices on the network.
-        """
+        """The initial step that the user sees."""
         errors = {}
         if user_input is not None:
             client = GreeVersatiClient()
@@ -60,7 +55,7 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
 
-        # If no user input yet, display a simple form (e.g. a “start discovery” button)
+        # If no user input yet, display a simple form.
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({}),
@@ -74,16 +69,11 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_bind(user_input)
 
     async def async_step_bind(self, user_input):
-        """
-        Bind to the device by negotiating the key.
-
-        Expects the selected device's MAC address in user_input.
-        """
+        """Bind to the device by negotiating the key."""
         mac = user_input.get("mac")
         if not mac:
             return self.async_abort(reason="invalid_device")
         
-        # Run discovery again to obtain the current device info (or use a cached result)
         client = GreeVersatiClient()
         try:
             devices = await client.run_discovery()
@@ -95,19 +85,15 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if device is None:
             return self.async_abort(reason="device_not_found")
         
-        # Attempt to bind to the device to negotiate the key.
         try:
-            # This assumes that your DeviceInfo (or the client) implements an async bind() method.
             key = await device.bind()
         except Exception as exc:
             _LOGGER.error("Error during binding with device %s: %s", mac, exc)
             return self.async_abort(reason="bind_failed")
         
-        # Use the device MAC as a unique id to prevent duplicate configuration entries.
         await self.async_set_unique_id(device.mac)
         self._abort_if_unique_id_configured()
         
-        # Prepare the data to be stored for this integration.
         config_data = {
             CONF_IP: device.ip,
             CONF_PORT: device.port,

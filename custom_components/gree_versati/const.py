@@ -6,3 +6,5 @@ LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "gree_versati"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
+
+CONF_IP = "ip"

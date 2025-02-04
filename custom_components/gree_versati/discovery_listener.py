@@ -1,4 +1,4 @@
-from greeclimate import AwhpDevice  # Adjust as needed
+from greeclimate.awhp_device import AwhpDevice
 from greeclimate.base_device import DeviceInfo
 from greeclimate.discovery import Listener
 

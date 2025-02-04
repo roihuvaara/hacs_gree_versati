@@ -13,12 +13,12 @@ from typing import TYPE_CHECKING
 # from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.const import Platform
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP, CONF_PORT, CONF_MAC, CONF_NAME
+from homeassistant.const import CONF_PORT, CONF_MAC, CONF_NAME
 from homeassistant.core import HomeAssistant
 
 
 from .client import GreeVersatiClient
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN, LOGGER, CONF_IP
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .data import GreeVersatiData
 
