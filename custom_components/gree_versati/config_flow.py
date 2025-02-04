@@ -41,11 +41,11 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # If exactly one device is discovered, proceed to bind immediately.
             if len(devices) == 1:
                 device = devices[0]
-                return await self.async_step_bind({"mac": device.mac})
+                return await self.async_step_bind({"mac": device.device_info.mac})
 
             # If more than one device is found, let the user choose which one to bind.
             device_options = {
-                device.mac: f"{device.name} ({device.ip})" for device in devices
+                device.device_info.mac: f"{device.name} ({device.ip})" for device in devices
             }
             return self.async_show_form(
                 step_id="select_device",
@@ -91,13 +91,13 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.error("Error during binding with device %s: %s", mac, exc)
             return self.async_abort(reason="bind_failed")
         
-        await self.async_set_unique_id(device.mac)
+        await self.async_set_unique_id(device.device_info.mac)
         self._abort_if_unique_id_configured()
         
         config_data = {
             CONF_IP: device.ip,
             CONF_PORT: device.port,
-            CONF_MAC: device.mac,
+            CONF_MAC: device.device_info.mac,
             CONF_NAME: device.name,
             "key": key,
         }
