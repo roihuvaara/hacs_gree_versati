@@ -1,5 +1,5 @@
 colorlog==6.9.0
 homeassistant==2024.11.0
 pip>=21.3.1
-ruff==0.9.1
+ruff==0.9.4
 greeclimate_versati_fork @ git+https://github.com/roihuvaara/greeclimate@6f5297ecb3dcf21e355a02816b1de36817399b04
