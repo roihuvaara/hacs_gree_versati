@@ -81,7 +81,7 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.error("Error during discovery in binding step: %s", exc)
             return self.async_abort(reason="cannot_connect")
         
-        device = next((d for d in devices if d.mac == mac), None)
+        device = next((d for d in devices if d.device_info.mac == mac), None)
         if device is None:
             return self.async_abort(reason="device_not_found")
         
@@ -95,11 +95,11 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
         
         config_data = {
-            CONF_IP: device.ip,
-            CONF_PORT: device.port,
+            CONF_IP: device.device_info.ip,
+            CONF_PORT: device.device_info.port,
             CONF_MAC: device.device_info.mac,
-            CONF_NAME: device.name,
+            CONF_NAME: device.device_info.name,
             "key": key,
         }
         
-        return self.async_create_entry(title=device.name, data=config_data)
+        return self.async_create_entry(title=device.device_info.name, data=config_data)
