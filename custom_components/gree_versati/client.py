@@ -13,7 +13,7 @@ from .discovery_listener import DiscoveryListener
 from .const import LOGGER
 
 if TYPE_CHECKING:
-    from greeclimate_versati_fork.base_device import DeviceInfo
+    from greeclimate_versati_fork.deviceinfo import DeviceInfo
 
 LOGGER = logging.getLogger(__name__)
 
