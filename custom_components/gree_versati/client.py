@@ -8,12 +8,10 @@ from typing import TYPE_CHECKING, List
 
 from greeclimate_versati_fork.awhp_device import AwhpDevice
 from greeclimate_versati_fork.discovery import Discovery
+from greeclimate_versati_fork.deviceinfo import DeviceInfo
 from .discovery_listener import DiscoveryListener
 
 from .const import LOGGER
-
-if TYPE_CHECKING:
-    from greeclimate_versati_fork.deviceinfo import DeviceInfo
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,6 +38,34 @@ class GreeVersatiClient:
         if self.device is None:
             raise Exception("Device not initialized")
         return self.device.hot_water_temp()
+    
+    async def initialize(self) -> None:
+        """
+        Initialize the device connection.
+
+        If the connection parameters (ip, port, mac) are provided, create a DeviceInfo
+        and then an AwhpDevice. Then, bind to the device using the stored key if provided.
+        """
+        if self.ip and self.port and self.mac:
+            # Create the device info from stored parameters.
+            device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
+            self.device = AwhpDevice(device_info)
+            try:
+                if self.key:
+                    await self.device.bind(key=self.key)
+                else:
+                    # Bind without a key, letting the device negotiate one.
+                    await self.device.bind()
+            except Exception as exc:
+                # Handle binding errors as needed.
+                raise Exception(f"Binding failed: {exc}")
+        else:
+            # Optionally, run discovery if connection parameters are not provided.
+            devices = await self.run_discovery()
+            if devices:
+                self.device = devices[0]
+            else:
+                raise Exception("No devices discovered.")
 
     async def run_discovery(self) -> List[AwhpDevice]:
         """
