@@ -85,6 +85,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=5),
     )
 
+    # Create the data container
+    data = GreeVersatiData(
+        client=client,
+        coordinator=coordinator,
+        integration=await hass.async_get_integration(DOMAIN),
+    )
+
+    # Store the runtime data in the coordinator
+    coordinator.config_entry = entry
+    coordinator.config_entry.runtime_data = data
+
     try:
         # Perform an initial data refresh. If this fails, the setup will be retried later.
         await coordinator.async_config_entry_first_refresh()
@@ -92,11 +103,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
         return False
 
-    # Store the client and coordinator in hass.data for use by your platform code.
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-        "client": client,
-        "coordinator": coordinator,
-    }
+    # Store everything in hass.data
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = data
 
     # Forward the config entry setup to the supported platforms (e.g. sensor and device).
     hass.async_create_task(

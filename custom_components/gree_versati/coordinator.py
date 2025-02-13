@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from .const import LOGGER
 
 if TYPE_CHECKING:
     from .data import GreeVersatiConfigEntry
@@ -19,6 +20,9 @@ class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> Any:
         """Update data via library."""
         try:
-            return await self.config_entry.runtime_data.client.async_get_data()
-        except:
-            raise UpdateFailed from None
+            data = await self.config_entry.runtime_data.client.async_get_data()
+            LOGGER.debug("Retrieved device data: %s", data)
+            return data
+        except Exception as exc:
+            LOGGER.error("Error fetching data from device: %s", exc)
+            raise UpdateFailed(f"Error communicating with device: {exc}") from exc
