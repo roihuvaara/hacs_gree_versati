@@ -18,8 +18,13 @@ type GreeVersatiConfigEntry = ConfigEntry[GreeVersatiData]
 
 @dataclass
 class GreeVersatiData:
-    """Data for the Gree Versati integration."""
+    """Data class for runtime data."""
 
-    client: GreeVersatiClient
-    coordinator: GreeVersatiDataUpdateCoordinator
-    integration: Integration
+    def __init__(
+        self,
+        client: GreeVersatiClient,
+        coordinator: GreeVersatiDataUpdateCoordinator,
+    ) -> None:
+        """Initialize the data class."""
+        self.client = client
+        self.coordinator = coordinator

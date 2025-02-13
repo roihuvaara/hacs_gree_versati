@@ -89,7 +89,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = GreeVersatiData(
         client=client,
         coordinator=coordinator,
-        integration=await hass.async_get_integration(DOMAIN),
     )
 
     # Store the runtime data in the coordinator
