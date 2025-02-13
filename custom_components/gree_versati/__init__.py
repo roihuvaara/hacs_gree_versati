@@ -80,7 +80,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up the data update coordinator that will periodically fetch data from the device.
     coordinator = GreeVersatiDataUpdateCoordinator(
         hass=hass,
-        logger=LOGGER,
         name=DOMAIN,
         update_interval=timedelta(seconds=5),
     )

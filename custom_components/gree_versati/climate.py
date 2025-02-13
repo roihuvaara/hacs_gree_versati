@@ -51,15 +51,21 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     @property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
-        return self.coordinator.data.get("water_out_temp")
+        temp = self.coordinator.data.get("water_out_temp")
+        LOGGER.debug(f"Current temperature: {temp}")
+        return temp
 
     @property
     def target_temperature(self) -> float | None:
         """Return the target temperature."""
         if self.hvac_mode == HVACMode.HEAT:
-            return self.coordinator.data.get("heat_temp_set")
+            temp = self.coordinator.data.get("heat_temp_set")
+            LOGGER.debug(f"Target heat temperature: {temp}")
+            return temp
         elif self.hvac_mode == HVACMode.COOL:
-            return self.coordinator.data.get("cool_temp_set")
+            temp = self.coordinator.data.get("cool_temp_set")
+            LOGGER.debug(f"Target cool temperature: {temp}")
+            return temp
         return None
 
     @property

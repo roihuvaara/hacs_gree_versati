@@ -41,10 +41,9 @@ class GreeVersatiClient:
             raise Exception("Device not initialized")
         
         try:
-            # Get all properties in one request
             raw_data = await self.device.get_all_properties()
+            LOGGER.debug(f"Raw data from device: {raw_data}")  # Add debug logging
             
-            # Transform the raw data into our desired format
             self._data = {
                 # Current temperatures using helper methods with raw data
                 "water_out_temp": self.device.t_water_out_pe(raw_data),
@@ -73,9 +72,11 @@ class GreeVersatiClient:
                 # Device information
                 "versati_series": raw_data[AwhpProps.VERSATI_SERIES.value],
             }
+            LOGGER.debug(f"Transformed data: {self._data}")  # Add debug logging
             return self._data
             
         except Exception as exc:
+            LOGGER.error(f"Failed to fetch device data: {exc}")
             raise Exception(f"Failed to fetch device data: {exc}")
 
     async def initialize(self) -> None:
