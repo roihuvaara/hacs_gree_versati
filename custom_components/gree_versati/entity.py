@@ -10,9 +10,10 @@ from .coordinator import GreeVersatiDataUpdateCoordinator
 
 
 class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
-    """BlueprintEntity class."""
+    """Base class for Gree Versati entities."""
 
     _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
 
     def __init__(self, coordinator: GreeVersatiDataUpdateCoordinator) -> None:
         """Initialize."""
@@ -26,3 +27,16 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
                 ),
             },
         )
+
+    @property
+    def device_info(self):
+        """Return device information."""
+        model_series = self.coordinator.data.get("versati_series")
+        model_name = model_series if model_series else "Versati"
+        
+        return {
+            "identifiers": {("gree_versati", self.coordinator.config_entry.entry_id)},
+            "name": self.coordinator.config_entry.title,
+            "manufacturer": "Gree",
+            "model": model_name,
+        }

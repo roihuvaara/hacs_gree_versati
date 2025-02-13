@@ -1,99 +1,87 @@
-"""Floor Heating climate entity for the Gree Versati integration."""
+"""Climate platform for Gree Versati."""
 from __future__ import annotations
-import logging
 
-from homeassistant.components.climate import ClimateEntity, HVACMode
-from homeassistant.const import TEMP_CELSIUS
+from typing import Any
+
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import GreeVersatiDataUpdateCoordinator
+from .entity import GreeVersatiEntity
 
-_LOGGER = logging.getLogger(__name__)
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the Gree Versati climate platform."""
+    data = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([GreeVersatiClimate(data.coordinator, data.client)])
 
-async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities) -> None:
-    """Set up the Gree Versati floor heating climate entity."""
-    coordinator: GreeVersatiDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    async_add_entities([GreeVersatiFloorHeatingClimate(coordinator, entry)], True)
+class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
+    """Representation of a Gree Versati Climate device."""
 
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
+    )
 
-class GreeVersatiFloorHeatingClimate(CoordinatorEntity, ClimateEntity):
-    """Representation of the Gree Versati Floor Heating Climate entity."""
-
-    def __init__(self, coordinator: GreeVersatiDataUpdateCoordinator, entry: ConfigEntry) -> None:
-        """Initialize the floor heating climate entity."""
+    def __init__(
+        self,
+        coordinator: GreeVersatiDataUpdateCoordinator,
+        client,
+    ) -> None:
+        """Initialize the climate device."""
         super().__init__(coordinator)
-        self._entry = entry
-        self._attr_name = entry.data.get("name", "Gree Versati Floor Heating")
-        self._attr_unique_id = f"{entry.data.get('mac')}_floorheating"
-        self._attr_temperature_unit = TEMP_CELSIUS
-        self._attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
-        self._target_temperature: float | None = None
+        self._client = client
+        self._attr_unique_id = f"{client.mac}_climate"
+        self._attr_name = "Gree Versati Climate"
 
     @property
     def current_temperature(self) -> float | None:
-        """Return the current floor heating temperature.
-
-        This example assumes the coordinator's data is a dict with a key 'floor_temp'.
-        Adjust as needed.
-        """
-        if isinstance(self.coordinator.data, dict):
-            return self.coordinator.data.get("floor_temp")
-        return None
+        """Return the current temperature."""
+        return self.coordinator.data.get("water_out_temp")
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target floor heating temperature."""
-        return self._target_temperature
+        """Return the target temperature."""
+        if self.hvac_mode == HVACMode.HEAT:
+            return self.coordinator.data.get("heat_temp_set")
+        elif self.hvac_mode == HVACMode.COOL:
+            return self.coordinator.data.get("cool_temp_set")
+        return None
 
-    async def async_set_temperature(self, **kwargs) -> None:
-        """Set a new target temperature for floor heating."""
-        new_temp = kwargs.get("temperature")
-        if new_temp is None:
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """Return hvac operation mode."""
+        if not self.coordinator.data.get("power"):
+            return HVACMode.OFF
+        mode = self.coordinator.data.get("mode")
+        if mode == 4:
+            return HVACMode.HEAT
+        elif mode == 1:
+            return HVACMode.COOL
+        return HVACMode.OFF
+
+    async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set new target temperature."""
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
-        # Here you would call your device API to update the floor heating target temperature.
-        self._target_temperature = new_temp
-        _LOGGER.debug("Setting floor heating target temperature to %s", new_temp)
-        self.async_write_ha_state()
+        await self._client.set_temperature(temperature, self.hvac_mode)
+        await self.coordinator.async_request_refresh()
 
-    @property
-    def hvac_mode(self) -> str:
-        """Return the current HVAC mode for floor heating."""
-        return HVACMode.HEAT if self._target_temperature is not None else HVACMode.OFF
-
-    async def async_set_hvac_mode(self, hvac_mode: str) -> None:
-        """Set a new HVAC mode for floor heating."""
-        if hvac_mode == HVACMode.OFF:
-            self._target_temperature = None
-            _LOGGER.debug("Floor heating turned off.")
-        else:
-            if self._target_temperature is None:
-                self._target_temperature = 22.0  # default target temperature for floor heating
-            _LOGGER.debug("Floor heating turned on. Target temperature: %s", self._target_temperature)
-        self.async_write_ha_state()
-
-    @property
-    def hvac_modes(self) -> list[str]:
-        """Return the list of available HVAC modes for floor heating."""
-        return [HVACMode.HEAT, HVACMode.OFF]
-
-    @property
-    def min_temp(self) -> float:
-        """Return the minimum allowed temperature for floor heating."""
-        return 16.0
-
-    @property
-    def max_temp(self) -> float:
-        """Return the maximum allowed temperature for floor heating."""
-        return 30.0
-
-    @property
-    def device_info(self) -> dict:
-        """Return device information so that both entities share the same device."""
-        return {
-            "identifiers": {(DOMAIN, self._entry.data.get("mac"))},
-            "name": self._entry.data.get("name", "Gree Versati"),
-            "manufacturer": "Gree",
-            "model": "Versati Air to Water Heat Pump",
-        }
+    async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set new target hvac mode."""
+        await self._client.set_hvac_mode(hvac_mode)
+        await self.coordinator.async_request_refresh()

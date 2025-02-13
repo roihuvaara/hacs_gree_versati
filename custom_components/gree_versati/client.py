@@ -69,6 +69,9 @@ class GreeVersatiClient:
                 "hp_heater_1_status": raw_data[AwhpProps.HP_HEATER_1_STATUS.value],
                 "hp_heater_2_status": raw_data[AwhpProps.HP_HEATER_2_STATUS.value],
                 "frost_protection": raw_data[AwhpProps.AUTOMATIC_FROST_PROTECTION.value],
+                
+                # Device information
+                "versati_series": raw_data[AwhpProps.VERSATI_SERIES.value],
             }
             return self._data
             
