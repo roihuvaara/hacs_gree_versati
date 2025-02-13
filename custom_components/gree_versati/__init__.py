@@ -81,6 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = GreeVersatiDataUpdateCoordinator(
         hass=hass,
         name=DOMAIN,
+        logger=LOGGER,
         update_interval=timedelta(seconds=5),
     )
 
