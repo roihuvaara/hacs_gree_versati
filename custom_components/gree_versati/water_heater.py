@@ -12,7 +12,7 @@ from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .entity import GreeVersatiEntity
 
@@ -51,17 +51,23 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     @property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
-        return self.coordinator.data.get("hot_water_temp")
+        temp = self.coordinator.data.get("hot_water_temp")
+        LOGGER.debug(f"DHW current temperature: {temp}")
+        return temp
 
     @property
     def target_temperature(self) -> float | None:
         """Return the target temperature."""
-        return self.coordinator.data.get("hot_water_temp_set")
+        temp = self.coordinator.data.get("hot_water_temp_set")
+        LOGGER.debug(f"DHW target temperature: {temp}")
+        return temp
 
     @property
     def current_operation(self) -> str | None:
         """Return current operation."""
-        return "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
+        mode = "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
+        LOGGER.debug(f"DHW operation mode: {mode}")
+        return mode
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""

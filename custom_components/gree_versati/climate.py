@@ -13,7 +13,7 @@ from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .entity import GreeVersatiEntity
 
