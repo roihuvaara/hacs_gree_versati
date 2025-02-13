@@ -77,6 +77,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER.error("Failed to initialize device '%s' (%s): %s", name, mac, exc)
         return False
 
+    # Create the data container first
+    data = GreeVersatiData(
+        client=client,
+        coordinator=None,  # We'll set this after creating the coordinator
+    )
+
     # Set up the data update coordinator that will periodically fetch data from the device.
     coordinator = GreeVersatiDataUpdateCoordinator(
         hass=hass,
@@ -85,18 +91,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=5),
     )
 
-    # Create the data container
-    data = GreeVersatiData(
-        client=client,
-        coordinator=coordinator,
-    )
-
-    # Store the runtime data in the coordinator
+    # Now link everything together
+    data.coordinator = coordinator
     coordinator.config_entry = entry
     coordinator.config_entry.runtime_data = data
 
     try:
-        # Perform an initial data refresh. If this fails, the setup will be retried later.
+        # Perform an initial data refresh
         await coordinator.async_config_entry_first_refresh()
     except Exception as exc:
         LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
