@@ -38,41 +38,56 @@ class GreeVersatiClient:
     async def async_get_data(self) -> dict:
         """Fetch data from the device."""
         if self.device is None:
+            LOGGER.error("Device not initialized")
             raise Exception("Device not initialized")
         
         try:
+            LOGGER.debug("Starting data fetch from device")
             raw_data = await self.device.get_all_properties()
-            LOGGER.debug(f"Raw data from device: {raw_data}")  # Add debug logging
+            LOGGER.debug(f"Raw data from device: {raw_data}")
+            
+            # Add debug logging for each temperature calculation
+            water_out_temp = self.device.t_water_out_pe(raw_data)
+            LOGGER.debug(f"Water out temp: {water_out_temp}")
+            
+            water_in_temp = self.device.t_water_in_pe(raw_data)
+            LOGGER.debug(f"Water in temp: {water_in_temp}")
+            
+            hot_water_temp = self.device.hot_water_temp(raw_data)
+            LOGGER.debug(f"Hot water temp: {hot_water_temp}")
+            
+            opt_water_temp = self.device.t_opt_water(raw_data)
+            LOGGER.debug(f"Optimal water temp: {opt_water_temp}")
             
             self._data = {
                 # Current temperatures using helper methods with raw data
-                "water_out_temp": self.device.t_water_out_pe(raw_data),
-                "water_in_temp": self.device.t_water_in_pe(raw_data),
-                "hot_water_temp": self.device.hot_water_temp(raw_data),
-                "opt_water_temp": self.device.t_opt_water(raw_data),
-                "remote_home_temp": self.device.remote_home_temp(raw_data),
+                "water_out_temp": water_out_temp,
+                "water_in_temp": water_in_temp,
+                "hot_water_temp": hot_water_temp,
+                "opt_water_temp": opt_water_temp,
                 
                 # Target temperatures (these are already in correct format)
-                "heat_temp_set": raw_data[AwhpProps.HEAT_TEMP_SET.value],
-                "cool_temp_set": raw_data[AwhpProps.COOL_TEMP_SET.value],
-                "hot_water_temp_set": raw_data[AwhpProps.HOT_WATER_TEMP_SET.value],
+                "heat_temp_set": raw_data.get(AwhpProps.HEAT_TEMP_SET.value),
+                "cool_temp_set": raw_data.get(AwhpProps.COOL_TEMP_SET.value),
+                "hot_water_temp_set": raw_data.get(AwhpProps.HOT_WATER_TEMP_SET.value),
                 
                 # Operation modes and states
-                "power": raw_data[AwhpProps.POWER.value],
-                "mode": raw_data[AwhpProps.MODE.value],
-                "fast_heat_water": raw_data[AwhpProps.FAST_HEAT_WATER.value],
+                "power": raw_data.get(AwhpProps.POWER.value),
+                "mode": raw_data.get(AwhpProps.MODE.value),
+                "fast_heat_water": raw_data.get(AwhpProps.FAST_HEAT_WATER.value),
                 
                 # Status indicators
-                "tank_heater_status": raw_data[AwhpProps.TANK_HEATER_STATUS.value],
-                "defrosting_status": raw_data[AwhpProps.SYSTEM_DEFROSTING_STATUS.value],
-                "hp_heater_1_status": raw_data[AwhpProps.HP_HEATER_1_STATUS.value],
-                "hp_heater_2_status": raw_data[AwhpProps.HP_HEATER_2_STATUS.value],
-                "frost_protection": raw_data[AwhpProps.AUTOMATIC_FROST_PROTECTION.value],
+                "tank_heater_status": raw_data.get(AwhpProps.TANK_HEATER_STATUS.value),
+                "defrosting_status": raw_data.get(AwhpProps.SYSTEM_DEFROSTING_STATUS.value),
+                "hp_heater_1_status": raw_data.get(AwhpProps.HP_HEATER_1_STATUS.value),
+                "hp_heater_2_status": raw_data.get(AwhpProps.HP_HEATER_2_STATUS.value),
+                "frost_protection": raw_data.get(AwhpProps.AUTOMATIC_FROST_PROTECTION.value),
                 
                 # Device information
-                "versati_series": raw_data[AwhpProps.VERSATI_SERIES.value],
+                "versati_series": raw_data.get(AwhpProps.VERSATI_SERIES.value),
             }
-            LOGGER.debug(f"Transformed data: {self._data}")  # Add debug logging
+            
+            LOGGER.debug(f"Processed data: {self._data}")
             return self._data
             
         except Exception as exc:
