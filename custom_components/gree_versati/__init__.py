@@ -61,6 +61,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
       - CONF_NAME: the device name (or a fallback value)
       - "key": the negotiated binding key
     """
+    LOGGER.debug("Starting setup of Gree Versati integration")
+    
     ip = entry.data[CONF_IP]
     port = entry.data[CONF_PORT]
     mac = entry.data[CONF_MAC]
@@ -71,8 +73,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client = GreeVersatiClient(ip=ip, port=port, mac=mac, key=key)
 
     try:
-        # Initialize the client (this will create the device instance and bind it using the stored key).
+        LOGGER.debug("Initializing device connection")
         await client.initialize()
+        LOGGER.debug("Device initialization successful")
     except Exception as exc:
         LOGGER.error("Failed to initialize device '%s' (%s): %s", name, mac, exc)
         return False
@@ -83,7 +86,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinator=None,  # We'll set this after creating the coordinator
     )
 
-    # Set up the data update coordinator that will periodically fetch data from the device.
+    # Set up the data update coordinator
+    LOGGER.debug("Creating data update coordinator")
     coordinator = GreeVersatiDataUpdateCoordinator(
         hass=hass,
         name=DOMAIN,
@@ -91,14 +95,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=5),
     )
 
-    # Now link everything together
+    # Link everything together
     data.coordinator = coordinator
     coordinator.config_entry = entry
     coordinator.config_entry.runtime_data = data
 
     try:
-        # Perform an initial data refresh
+        LOGGER.debug("Performing initial data refresh")
         await coordinator.async_config_entry_first_refresh()
+        LOGGER.debug("Initial data refresh successful")
     except Exception as exc:
         LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
         return False
@@ -106,11 +111,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Store everything in hass.data
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = data
 
-    # Forward the config entry setup to the supported platforms (e.g. sensor and device).
+    # Forward the config entry setup to platforms
+    LOGGER.debug("Setting up platforms")
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     )
 
+    LOGGER.debug("Gree Versati integration setup complete")
     return True
 
 
