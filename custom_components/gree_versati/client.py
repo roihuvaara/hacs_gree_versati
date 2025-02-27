@@ -101,7 +101,9 @@ class GreeVersatiClient:
         If the connection parameters (ip, port, mac) are provided, create a DeviceInfo
         and then an AwhpDevice. Then, bind to the device using the stored key if provided.
         """
+        LOGGER.debug(f"Initializing gree versati")
         if self.ip and self.port and self.mac:
+            LOGGER.debug(f"Initializing device with IP: {self.ip}, Port: {self.port}, MAC: {self.mac}")
             # Create the device info from stored parameters.
             device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
             self.device = AwhpDevice(device_info)
