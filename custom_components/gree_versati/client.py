@@ -12,8 +12,6 @@ from greeclimate_versati_fork.deviceinfo import DeviceInfo
 from .discovery_listener import DiscoveryListener
 from greeclimate_versati_fork.awhp_device import AwhpProps
 
-from .const import LOGGER
-
 LOGGER = logging.getLogger(__name__)
 
 class GreeVersatiClient:
