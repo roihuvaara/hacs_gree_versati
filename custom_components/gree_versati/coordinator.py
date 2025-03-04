@@ -16,21 +16,6 @@ if TYPE_CHECKING:
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
 class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the device."""
-
-    def __init__(self, hass, config_entry):
-        """Initialize my coordinator."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            name="GreeVersati",
-            config_entry=config_entry,
-            update_interval=timedelta(seconds=30),
-            # Set always_update to `False` if the data returned from the
-            # api can be compared via `__eq__` to avoid duplicate updates
-            # being dispatched to listeners
-            always_update=True
-        )
-
     async def _async_update_data(self) -> Any:
         """Update data via library."""
         try:

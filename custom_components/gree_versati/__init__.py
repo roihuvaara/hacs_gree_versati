@@ -92,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass=hass,
         name=DOMAIN,
         logger=LOGGER,
-        update_interval=timedelta(seconds=5),
+        update_interval=timedelta(seconds=30),
     )
 
     # Link everything together
