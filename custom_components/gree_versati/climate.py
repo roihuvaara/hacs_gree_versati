@@ -30,6 +30,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     """Representation of a Gree Versati Climate device."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_target_temperature_step = 1
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
