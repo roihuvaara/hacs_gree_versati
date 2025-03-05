@@ -192,6 +192,9 @@ class GreeVersatiClient:
             self.device.heat_temp_set = int(temperature)
         elif mode == "cool" or (mode is None and self.hvac_mode == "cool"):
             self.device.cool_temp_set = int(temperature)
+
+        await self.device.push_state_update()
+
         # Optionally refresh data after setting
         await self.async_get_data()
 
