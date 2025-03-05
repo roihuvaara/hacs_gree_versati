@@ -84,7 +84,18 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         """Set new target temperature."""
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
-        await self._client.set_temperature(temperature, self.hvac_mode)
+
+        if self.hvac_mode == HVACMode.HEAT:
+            # Use the property setter for heating temperature
+            self._client.heat_temp_set = int(temperature)
+        elif self.hvac_mode == HVACMode.COOL:
+            # Use the property setter for cooling temperature
+            self._client.cool_temp_set = int(temperature)
+
+        # Send the changes to the device
+        await self._client.send_state()
+        
+        # Refresh the coordinator to update the UI
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
