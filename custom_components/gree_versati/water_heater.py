@@ -45,8 +45,13 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         """Initialize the water heater device."""
         super().__init__(coordinator)
         self._client = client
-        self._attr_unique_id = f"{client.mac}_water_heater"
-        self._attr_name = "Gree Versati Water Heater"
+        # Simplified unique ID
+        self._attr_unique_id = f"gree_versati_{client.mac}"
+
+    @property
+    def translation_key(self):
+        """Return the translation key to translate the entity's name."""
+        return "water_heater"
 
     @property
     def current_temperature(self) -> float | None:
@@ -113,13 +118,3 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     def max_temp(self) -> float:
         """Return the maximum allowed temperature."""
         return 80.0
-
-    @property
-    def device_info(self) -> dict:
-        """Return device information so that both entities share the same device."""
-        return {
-            "identifiers": {(DOMAIN, self._client.mac)},
-            "name": self._attr_name,
-            "manufacturer": "Gree",
-            "model": "Versati Air to Water Heat Pump",
-        }

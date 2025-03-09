@@ -102,4 +102,4 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "key": key,
         }
         
-        return self.async_create_entry(title=device.device_info.name, data=config_data)
+        return self.async_create_entry(title="Gree Versati", data=config_data)

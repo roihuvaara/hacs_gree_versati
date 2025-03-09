@@ -46,8 +46,12 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         """Initialize the climate device."""
         super().__init__(coordinator)
         self._client = client
-        self._attr_unique_id = f"{client.mac}_climate"
-        self._attr_name = "Gree Versati Climate"
+        self._attr_unique_id = f"gree_versati_{client.mac}"
+
+    @property
+    def translation_key(self):
+        """Return the translation key to translate the entity's name."""
+        return "climate"
 
     @property
     def current_temperature(self) -> float | None:

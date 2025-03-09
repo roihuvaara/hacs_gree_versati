@@ -17,5 +17,17 @@
         "abort": {
             "already_configured": "This entry is already configured."
         }
+    },
+    "entity": {
+        "climate": {
+            "climate": {
+                "name": "[%key:component::climate::title%]"
+            }
+        },
+        "water_heater": {
+            "water_heater": {
+                "name": "[%key:component::water_heater::title%]"
+            }
+        }
     }
 }

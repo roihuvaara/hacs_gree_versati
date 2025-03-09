@@ -1,6 +1,7 @@
 {
   "domain": "gree_versati",
   "name": "Gree Versati",
+  "brand": "gree",
   "codeowners": [
     "@roihuvaara"
   ],
