@@ -10,15 +10,14 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-# from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.const import Platform
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PORT, CONF_MAC, CONF_NAME
+
+# from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 
-
 from .client import GreeVersatiClient
-from .const import DOMAIN, LOGGER, CONF_IP
+from .const import CONF_IP, DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .data import GreeVersatiData
 
@@ -42,7 +41,7 @@ PLATFORMS: list[Platform] = [
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """
     Set up the integration from YAML if present.
-    
+
     Since we are using a config flow (UI based configuration), this function only ensures
     that the integration's data container exists.
     """
@@ -53,7 +52,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
     Set up the Gree Versati integration from a config entry.
-    
+
     The config entry is expected to contain:
       - CONF_IP: the device's IP address
       - CONF_PORT: the device's port (usually 7000)
@@ -62,7 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
       - "key": the negotiated binding key
     """
     LOGGER.debug("Starting setup of Gree Versati integration")
-    
+
     ip = entry.data[CONF_IP]
     port = entry.data[CONF_PORT]
     mac = entry.data[CONF_MAC]

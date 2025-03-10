@@ -1,10 +1,11 @@
+import logging
+
 from greeclimate_versati_fork.awhp_device import AwhpDevice
 from greeclimate_versati_fork.deviceinfo import DeviceInfo
 from greeclimate_versati_fork.discovery import Listener
 
-import logging
-
 LOGGER = logging.getLogger(__name__)
+
 
 class DiscoveryListener(Listener):
     """Handle incoming device discovery events."""

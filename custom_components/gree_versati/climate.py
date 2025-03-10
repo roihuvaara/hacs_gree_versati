@@ -1,4 +1,5 @@
 """Climate platform for Gree Versati."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,6 +18,7 @@ from .const import DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .entity import GreeVersatiEntity
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -25,6 +27,7 @@ async def async_setup_entry(
     """Set up the Gree Versati climate platform."""
     data = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([GreeVersatiClimate(data.coordinator, data.client)])
+
 
 class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     """Representation of a Gree Versati Climate device."""
@@ -67,7 +70,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
             temp = self.coordinator.data.get("heat_temp_set")
             LOGGER.debug(f"Target heat temperature: {temp}")
             return temp
-        elif self.hvac_mode == HVACMode.COOL:
+        if self.hvac_mode == HVACMode.COOL:
             temp = self.coordinator.data.get("cool_temp_set")
             LOGGER.debug(f"Target cool temperature: {temp}")
             return temp
@@ -81,7 +84,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         mode = self.coordinator.data.get("mode")
         if mode == 4:
             return HVACMode.HEAT
-        elif mode == 1:
+        if mode == 1:
             return HVACMode.COOL
         return HVACMode.OFF
 
@@ -96,7 +99,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
             mode = "heat"
         elif self.hvac_mode == HVACMode.COOL:
             mode = "cool"
-            
+
         await self._client.set_temperature(temperature, mode=mode)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:

@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, List
 
-from greeclimate_versati_fork.awhp_device import AwhpDevice
-from greeclimate_versati_fork.discovery import Discovery
+from greeclimate_versati_fork.awhp_device import AwhpDevice, AwhpProps
 from greeclimate_versati_fork.deviceinfo import DeviceInfo
+from greeclimate_versati_fork.discovery import Discovery
+
 from .discovery_listener import DiscoveryListener
-from greeclimate_versati_fork.awhp_device import AwhpProps
 
 LOGGER = logging.getLogger(__name__)
 
+
 class GreeVersatiClient:
     """Facade class to manage communication with the device."""
-    
+
     def __init__(
         self,
         ip: str | None = None,
@@ -38,56 +38,56 @@ class GreeVersatiClient:
         if self.device is None:
             LOGGER.error("Device not initialized")
             raise Exception("Device not initialized")
-        
+
         try:
             LOGGER.debug("Starting data fetch from device")
             raw_data = await self.device.get_all_properties()
             LOGGER.debug(f"Raw data from device: {raw_data}")
-            
+
             # Add debug logging for each temperature calculation
             water_out_temp = self.device.t_water_out_pe(raw_data)
             LOGGER.debug(f"Water out temp: {water_out_temp}")
-            
+
             water_in_temp = self.device.t_water_in_pe(raw_data)
             LOGGER.debug(f"Water in temp: {water_in_temp}")
-            
+
             hot_water_temp = self.device.hot_water_temp(raw_data)
             LOGGER.debug(f"Hot water temp: {hot_water_temp}")
-            
+
             opt_water_temp = self.device.t_opt_water(raw_data)
             LOGGER.debug(f"Optimal water temp: {opt_water_temp}")
-            
+
             self._data = {
                 # Current temperatures using helper methods with raw data
                 "water_out_temp": water_out_temp,
                 "water_in_temp": water_in_temp,
                 "hot_water_temp": hot_water_temp,
                 "opt_water_temp": opt_water_temp,
-                
                 # Target temperatures (these are already in correct format)
                 "heat_temp_set": raw_data.get(AwhpProps.HEAT_TEMP_SET.value),
                 "cool_temp_set": raw_data.get(AwhpProps.COOL_TEMP_SET.value),
                 "hot_water_temp_set": raw_data.get(AwhpProps.HOT_WATER_TEMP_SET.value),
-                
                 # Operation modes and states
                 "power": raw_data.get(AwhpProps.POWER.value),
                 "mode": raw_data.get(AwhpProps.MODE.value),
                 "fast_heat_water": raw_data.get(AwhpProps.FAST_HEAT_WATER.value),
-                
                 # Status indicators
                 "tank_heater_status": raw_data.get(AwhpProps.TANK_HEATER_STATUS.value),
-                "defrosting_status": raw_data.get(AwhpProps.SYSTEM_DEFROSTING_STATUS.value),
+                "defrosting_status": raw_data.get(
+                    AwhpProps.SYSTEM_DEFROSTING_STATUS.value
+                ),
                 "hp_heater_1_status": raw_data.get(AwhpProps.HP_HEATER_1_STATUS.value),
                 "hp_heater_2_status": raw_data.get(AwhpProps.HP_HEATER_2_STATUS.value),
-                "frost_protection": raw_data.get(AwhpProps.AUTOMATIC_FROST_PROTECTION.value),
-                
+                "frost_protection": raw_data.get(
+                    AwhpProps.AUTOMATIC_FROST_PROTECTION.value
+                ),
                 # Device information
                 "versati_series": raw_data.get(AwhpProps.VERSATI_SERIES.value),
             }
-            
+
             LOGGER.debug(f"Processed data: {self._data}")
             return self._data
-            
+
         except Exception as exc:
             LOGGER.error(f"Failed to fetch device data: {exc}")
             raise Exception(f"Failed to fetch device data: {exc}")
@@ -99,9 +99,11 @@ class GreeVersatiClient:
         If the connection parameters (ip, port, mac) are provided, create a DeviceInfo
         and then an AwhpDevice. Then, bind to the device using the stored key if provided.
         """
-        LOGGER.debug(f"Initializing gree versati")
+        LOGGER.debug("Initializing gree versati")
         if self.ip and self.port and self.mac:
-            LOGGER.debug(f"Initializing device with IP: {self.ip}, Port: {self.port}, MAC: {self.mac}")
+            LOGGER.debug(
+                f"Initializing device with IP: {self.ip}, Port: {self.port}, MAC: {self.mac}"
+            )
             # Create the device info from stored parameters.
             device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
             self.device = AwhpDevice(device_info)
@@ -122,7 +124,7 @@ class GreeVersatiClient:
             else:
                 raise Exception("No devices discovered.")
 
-    async def run_discovery(self) -> List[AwhpDevice]:
+    async def run_discovery(self) -> list[AwhpDevice]:
         """
         Run the device discovery process.
 
@@ -136,7 +138,7 @@ class GreeVersatiClient:
 
         await discovery.scan(wait_for=10)  # Wait for 10 seconds (or adjust as needed)
         LOGGER.info("Done discovering devices")
-        
+
         device = listener.get_device()
         if device:
             return [device]
@@ -152,7 +154,7 @@ class GreeVersatiClient:
         """Get the target temperature based on current mode."""
         if self.hvac_mode == "heat":
             return self._data.get("heat_temp_set")
-        elif self.hvac_mode == "cool":
+        if self.hvac_mode == "cool":
             return self._data.get("cool_temp_set")
         return None
 
@@ -162,7 +164,7 @@ class GreeVersatiClient:
         mode = self._data.get("mode")
         if mode == 4:  # Heat mode
             return "heat"
-        elif mode == 1:  # Cool mode
+        if mode == 1:  # Cool mode
             return "cool"
         return "off"
 

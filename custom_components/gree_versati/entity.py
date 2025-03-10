@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
@@ -26,7 +25,7 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
         """Return device information."""
         model_series = self.coordinator.data.get("versati_series")
         model_name = f"Versati ({model_series})" if model_series else "Versati"
-        
+
         return {
             "identifiers": {(DOMAIN, self._client.mac)},
             "name": self.coordinator.config_entry.title,

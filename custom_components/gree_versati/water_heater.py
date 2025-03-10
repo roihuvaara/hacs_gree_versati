@@ -1,4 +1,5 @@
 """Water heater platform for Gree Versati."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -18,6 +19,7 @@ from .entity import GreeVersatiEntity
 
 OPERATION_LIST = ["normal", "performance"]
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -26,6 +28,7 @@ async def async_setup_entry(
     """Set up the Gree Versati water heater platform."""
     data = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([GreeVersatiWaterHeater(data.coordinator, data.client)])
+
 
 class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     """Representation of a Gree Versati Water Heater device."""
@@ -70,7 +73,9 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     @property
     def current_operation(self) -> str | None:
         """Return current operation."""
-        mode = "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
+        mode = (
+            "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
+        )
         LOGGER.debug(f"DHW operation mode: {mode}")
         return mode
 
@@ -88,7 +93,8 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
 
     @property
     def hvac_mode(self) -> str:
-        """Return the current HVAC mode.
+        """
+        Return the current HVAC mode.
 
         In this example, if a target temperature is set, the water heater is 'on',
         otherwise it's 'off'.
@@ -99,9 +105,8 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         """Set the HVAC mode for the water heater."""
         if hvac_mode == "off":
             self.target_temperature = None
-        else:
-            if self.target_temperature is None:
-                self.target_temperature = 50.0  # default target temperature
+        elif self.target_temperature is None:
+            self.target_temperature = 50.0  # default target temperature
         await self.async_set_temperature(temperature=self.target_temperature)
 
     @property

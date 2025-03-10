@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.loader import Integration
 
     from .client import GreeVersatiClient
     from .coordinator import GreeVersatiDataUpdateCoordinator
