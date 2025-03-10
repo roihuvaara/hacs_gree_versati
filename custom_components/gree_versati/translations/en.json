@@ -2,32 +2,34 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration have a look here: https://github.com/roihuvaara/hacs_gree_versati",
+                "title": "Gree Versati",
+                "description": "Set up your Gree Versati heat pump. Click Submit to start scanning for devices."
+            },
+            "select_device": {
+                "title": "Select Device",
+                "description": "Multiple devices found. Please select which one to set up.",
                 "data": {
-                    "username": "Username",
-                    "password": "Password"
+                    "mac": "Device"
                 }
             }
         },
         "error": {
-            "auth": "Username/Password is wrong.",
-            "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
+            "cannot_connect": "Failed to connect to the device",
+            "no_devices_found": "No devices found on the network"
         },
         "abort": {
-            "already_configured": "This entry is already configured."
+            "cannot_connect": "Failed to connect to the device",
+            "device_not_found": "Device not found",
+            "bind_failed": "Failed to bind to the device",
+            "invalid_device": "Invalid device selection"
         }
     },
     "entity": {
         "climate": {
-            "climate": {
-                "name": "[%key:component::climate::title%]"
-            }
+            "name": "Space Heating"
         },
         "water_heater": {
-            "water_heater": {
-                "name": "[%key:component::water_heater::title%]"
-            }
+            "name": "Water Heater"
         }
     }
 }
