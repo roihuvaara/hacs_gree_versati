@@ -1,0 +1,8 @@
+mkdir -p tests/fixtures
+touch tests/__init__.py
+touch tests/conftest.py
+touch tests/test_init.py
+touch tests/test_config_flow.py
+touch tests/test_sensor.py
+touch tests/test_climate.py
+touch pytest.ini 

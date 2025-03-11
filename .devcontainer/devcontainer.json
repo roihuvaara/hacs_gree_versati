@@ -1,0 +1,36 @@
+{
+    "name": "Gree Versati Development",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "version": "3.11"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ryanluker.vscode-coverage-gutters",
+                "GitHub.copilot"
+            ],
+            "settings": {
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false,
+                "python.testing.nosetestsEnabled": false,
+                "python.linting.enabled": true,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "python.linting.pylintEnabled": true
+            }
+        }
+    },
+    "postCreateCommand": "pip install -r requirements_test.txt",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+    ],
+    "workspaceFolder": "/workspace",
+    "forwardPorts": []
+}

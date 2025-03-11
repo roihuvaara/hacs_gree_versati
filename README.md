@@ -18,7 +18,7 @@ developers will have use for, please open a PR to add it :)
 
 This repository contains multiple files, here is a overview:
 
-File | Purpose | Documentation
+File | Purpose | Documentation
 -- | -- | --
 `.devcontainer.json` | Used for development/testing with Visual Studio Code. | [Documentation](https://code.visualstudio.com/docs/remote/containers)
 `.github/ISSUE_TEMPLATE/*.yml` | Templates for the issue tracker | [Documentation](https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository)
@@ -44,3 +44,69 @@ These are some next steps you may want to look into:
 - Create your first release.
 - Share your integration on the [Home Assistant Forum](https://community.home-assistant.io/).
 - Submit your integration to [HACS](https://hacs.xyz/docs/publish/start).
+
+# Testing with DevContainer
+
+This project includes a DevContainer configuration to simplify testing in a Linux environment.
+
+## Prerequisites
+
+1. [Visual Studio Code](https://code.visualstudio.com/)
+2. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+3. [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VS Code
+4. A Bash shell (Git Bash, WSL, or any other Bash implementation on Windows)
+
+## Running Tests in DevContainer
+
+### Option 1: Use the Bash Script
+
+The repository includes a Bash script to run tests in the container without having to enter the container yourself:
+
+1. Make sure Docker Desktop is running
+2. Make sure the devcontainer is running in VS Code
+3. Open a Bash shell (Git Bash, WSL, or similar on Windows)
+4. Run the script:
+
+```bash
+# Make script executable (only needed once)
+chmod +x run_tests_in_container.sh
+
+# Run all tests
+./run_tests_in_container.sh
+
+# Run specific tests
+./run_tests_in_container.sh tests/test_climate.py
+```
+
+### Option 2: Enter the Container
+
+1. Open the project in VS Code
+2. Click on the green button in the bottom-left corner of the window
+3. Select "Reopen in Container" from the menu
+4. Wait for the container to build and start (this may take a few minutes the first time)
+5. Once the container is running, you can:
+   - Run tests directly from VS Code's Test Explorer
+   - Use the terminal and run `python -m pytest tests/`
+   - Use the included script `.devcontainer/test_runner.sh`
+
+## Benefits of Using DevContainer
+
+- Avoids Windows-specific asyncio loop issues
+- Provides a consistent testing environment
+- Matches the environment used by Home Assistant more closely
+- Eliminates compatibility problems with pytest-socket
+
+## Manual Testing
+
+From the terminal in the devcontainer:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run a specific test file
+python -m pytest tests/test_minimal.py
+
+# Run with coverage report
+python -m pytest --cov=custom_components.gree_versati tests/
+```

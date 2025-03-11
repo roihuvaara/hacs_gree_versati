@@ -1,0 +1,7 @@
+{
+  "temperature": 22.5,
+  "target_temperature": 24.0,
+  "water_temperature": 45.0,
+  "hvac_mode": "heat",
+  "hvac_action": "heating"
+} 
