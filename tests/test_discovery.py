@@ -1,12 +1,10 @@
 """Tests for the device discovery functionality."""
 
-import asyncio
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
+import pytest
 from greeclimate_versati_fork.awhp_device import AwhpDevice
-from greeclimate_versati_fork.discovery import Discovery, Listener
+from greeclimate_versati_fork.deviceinfo import DeviceInfo
 
 from custom_components.gree_versati.client import GreeVersatiClient
 from custom_components.gree_versati.discovery_listener import DiscoveryListener

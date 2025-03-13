@@ -1,14 +1,13 @@
 """Test the config flow for the Gree Versati integration."""
 
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant import config_entries
+import pytest
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.gree_versati.config_flow import GreeVersatiConfigFlow
-from custom_components.gree_versati.const import CONF_IP, DOMAIN
+from custom_components.gree_versati.const import CONF_IP
 
 
 @pytest.fixture

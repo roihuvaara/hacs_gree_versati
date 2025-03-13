@@ -2,7 +2,7 @@
 
 import asyncio
 import unittest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import MagicMock, patch
 
 from custom_components.gree_versati.client import GreeVersatiClient
 
@@ -38,7 +38,6 @@ class TestGreeVersatiAsync(unittest.TestCase):
         async def mock_bind(key=None, cipher=None):
             mock_device.key = key
             mock_device.cipher = cipher
-            return None
 
         mock_device.bind = mock_bind
 

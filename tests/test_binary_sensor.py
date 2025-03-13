@@ -1,17 +1,17 @@
 """Test the GreeVersatiBinarySensor class."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntityDescription,
 )
 
 from custom_components.gree_versati.binary_sensor import (
+    ENTITY_DESCRIPTIONS,
     GreeVersatiBinarySensor,
     async_setup_entry,
-    ENTITY_DESCRIPTIONS,
 )
 
 

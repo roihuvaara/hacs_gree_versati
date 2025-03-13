@@ -1,14 +1,14 @@
 """Test the Gree Versati config flow."""
 
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-
-from homeassistant import config_entries, data_entry_flow
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_MAC, CONF_NAME
-from custom_components.gree_versati.const import DOMAIN, CONF_IP
-
 from greeclimate_versati_fork.awhp_device import AwhpDevice
 from greeclimate_versati_fork.deviceinfo import DeviceInfo
+from homeassistant import config_entries
+from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
+
+from custom_components.gree_versati.const import CONF_IP, DOMAIN
 
 
 @pytest.mark.asyncio

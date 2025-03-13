@@ -1,13 +1,14 @@
 """Test the GreeVersatiSensor class."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from homeassistant.components.sensor import SensorEntityDescription
+
 from custom_components.gree_versati.sensor import (
+    ENTITY_DESCRIPTIONS,
     GreeVersatiSensor,
     async_setup_entry,
-    ENTITY_DESCRIPTIONS,
 )
 
 

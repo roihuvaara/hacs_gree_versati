@@ -1,10 +1,9 @@
 """Test the GreeVersatiEntity class."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from custom_components.gree_versati.entity import GreeVersatiEntity
 from custom_components.gree_versati.const import ATTRIBUTION, DOMAIN
+from custom_components.gree_versati.entity import GreeVersatiEntity
 
 
 class TestGreeVersatiEntity:

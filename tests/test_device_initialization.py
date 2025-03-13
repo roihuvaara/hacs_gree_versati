@@ -1,12 +1,12 @@
 """Test device initialization for the Gree Versati integration."""
 
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from homeassistant.core import HomeAssistant
-from custom_components.gree_versati.const import DOMAIN
-from custom_components.gree_versati.client import GreeVersatiClient
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.gree_versati.client import GreeVersatiClient
 
 
 @pytest.mark.asyncio

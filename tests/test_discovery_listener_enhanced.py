@@ -1,10 +1,9 @@
 """Tests for an enhanced discovery listener that can handle multiple devices."""
 
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from greeclimate_versati_fork.deviceinfo import DeviceInfo
-from greeclimate_versati_fork.awhp_device import AwhpDevice
 
 from custom_components.gree_versati.discovery_listener import DiscoveryListener
 
@@ -99,8 +98,7 @@ class TestEnhancedDiscoveryListener:
                 """Mock device creation to return our pre-configured mocks."""
                 if device_info.mac == "AA:BB:CC:DD:EE:FF":
                     return mock_device_1
-                else:
-                    return mock_device_2
+                return mock_device_2
 
             async def device_found(self, device_info: DeviceInfo) -> None:
                 """Called when a new device is found on the network."""
@@ -116,7 +114,7 @@ class TestEnhancedDiscoveryListener:
                     # Also set the first device as the primary device for backward compatibility
                     if not self.device:
                         self.device = device
-                except Exception as exc:
+                except Exception:
                     # Log the error but continue with other devices
                     pass
 
@@ -191,8 +189,7 @@ class TestEnhancedDiscoveryListener:
                 """Mock device creation to return our pre-configured mocks."""
                 if device_info.mac == "AA:BB:CC:DD:EE:FF":
                     return mock_device_1
-                else:
-                    return mock_device_2
+                return mock_device_2
 
             async def device_found(self, device_info: DeviceInfo) -> None:
                 """Called when a new device is found on the network."""
@@ -208,7 +205,7 @@ class TestEnhancedDiscoveryListener:
                     # Also set the first device as the primary device for backward compatibility
                     if not self.device:
                         self.device = device
-                except Exception as exc:
+                except Exception:
                     # Log the error but continue with other devices
                     pass
 

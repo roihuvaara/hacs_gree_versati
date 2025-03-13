@@ -1,17 +1,15 @@
 """Test the GreeVersatiWaterHeater class."""
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.components.water_heater import (
-    WaterHeaterEntityFeature,
-)
+import pytest
+from homeassistant.components.water_heater import WaterHeaterEntityFeature
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
 from custom_components.gree_versati.water_heater import (
+    OPERATION_LIST,
     GreeVersatiWaterHeater,
     async_setup_entry,
-    OPERATION_LIST,
 )
 
 
@@ -152,7 +150,7 @@ class TestGreeVersatiWaterHeater:
         water_heater = GreeVersatiWaterHeater(coordinator, client)
 
         # Call set_temperature with no temperature
-        await water_heater.async_set_temperature(**{})
+        await water_heater.async_set_temperature()
 
         # Verify client.set_dhw_temperature was not called
         client.set_dhw_temperature.assert_not_called()

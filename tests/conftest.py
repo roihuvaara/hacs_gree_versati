@@ -1,19 +1,21 @@
 """Test fixtures for pytest compatibility."""
 
-import os
-import sys
-import pytest
 import asyncio
 import logging
-from unittest.mock import MagicMock, AsyncMock, patch
+import os
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 # Add the repository root to the Python path
 repo_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, repo_root)
 
 # Import constants from the component
-from custom_components.gree_versati.const import DOMAIN
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.gree_versati.const import DOMAIN
 
 # Configure logging to filter out asyncio debug messages
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -59,7 +61,6 @@ def enable_custom_integrations(monkeypatch):
     """Enable custom integrations defined in the test directory."""
     # This fixture is required by other Home Assistant fixtures
     # We provide a minimal version that doesn't cause errors
-    pass
 
 
 # Override hass fixture to avoid getting async_generator error
@@ -101,7 +102,7 @@ def hass(event_loop):
                 "errors": {},
                 "step_id": "bind",
             }
-        elif "mac" in user_input:
+        if "mac" in user_input:
             # Bind step - return a create_entry result
             data = {
                 "ip": "192.168.1.123",
@@ -189,7 +190,6 @@ def hass(event_loop):
     def find_mock_client():
         """Find the mock client instance in the test if it exists."""
         import inspect
-        import sys
 
         # Look for a patched GreeVersatiClient in the frames
         for frame_info in inspect.stack():
@@ -197,7 +197,7 @@ def hass(event_loop):
                 frame = frame_info.frame
                 if "mock_client_instance" in frame.f_locals:
                     return frame.f_locals["mock_client_instance"]
-                elif "mock_client" in frame.f_locals:
+                if "mock_client" in frame.f_locals:
                     return frame.f_locals["mock_client"]
 
         return None

@@ -1,19 +1,18 @@
 """Tests for the config flow's handling of device discovery."""
 
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from typing import Any, Dict, Optional, cast
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
-from homeassistant.data_entry_flow import FlowResultType, FlowResult
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.gree_versati.config_flow import GreeVersatiConfigFlow
-from custom_components.gree_versati.const import CONF_IP, DOMAIN
+from custom_components.gree_versati.const import CONF_IP
 
 
 def assert_form_error(
-    result: Optional[Dict[str, Any]], step_id: str, error: str
+    result: dict[str, Any] | None, step_id: str, error: str
 ) -> None:
     """Assert that the result is a form with the expected error."""
     if result is None:
@@ -24,7 +23,7 @@ def assert_form_error(
     assert errors and errors.get("base") == error
 
 
-def assert_abort(result: Optional[Dict[str, Any]], reason: str) -> None:
+def assert_abort(result: dict[str, Any] | None, reason: str) -> None:
     """Assert that the result is an abort with the expected reason."""
     if result is None:
         pytest.fail("Result is None")
@@ -33,7 +32,7 @@ def assert_abort(result: Optional[Dict[str, Any]], reason: str) -> None:
 
 
 def assert_create_entry(
-    result: Optional[Dict[str, Any]], title: str, data: Dict[str, Any]
+    result: dict[str, Any] | None, title: str, data: dict[str, Any]
 ) -> None:
     """Assert that the result is a create_entry with the expected data."""
     if result is None:
@@ -138,6 +137,7 @@ async def test_user_step_one_device(hass, mock_run_discovery, mock_device):
 
     # Create a mock schema for the bind step
     from unittest.mock import MagicMock
+
     import voluptuous as vol
 
     mock_schema = MagicMock()

@@ -1,7 +1,7 @@
 """Basic tests for the gree_versati integration."""
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from custom_components.gree_versati.client import GreeVersatiClient
 from custom_components.gree_versati.const import DOMAIN

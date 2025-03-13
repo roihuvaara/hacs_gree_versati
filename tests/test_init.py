@@ -1,12 +1,12 @@
 """Test gree_versati integration."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.core import HomeAssistant
-from unittest.mock import patch, MagicMock
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.gree_versati.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 @pytest.mark.asyncio

@@ -1,8 +1,8 @@
 """Test the GreeVersatiClimate class."""
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from homeassistant.components.climate.const import (
     ClimateEntityFeature,
     HVACMode,
@@ -251,7 +251,7 @@ class TestGreeVersatiClimate:
         climate = GreeVersatiClimate(coordinator, client)
 
         # Call set_temperature with no temperature
-        await climate.async_set_temperature(**{})
+        await climate.async_set_temperature()
 
         # Verify client.set_temperature was not called
         client.set_temperature.assert_not_called()

@@ -1,16 +1,11 @@
 """Test Gree Versati climate entity."""
 
-from unittest.mock import patch, MagicMock, AsyncMock
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.components.climate.const import (
     ATTR_HVAC_ACTION,
-    ATTR_HVAC_MODE,
 )
 from homeassistant.const import ATTR_TEMPERATURE
-
-from custom_components.gree_versati.const import DOMAIN
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 async def test_climate_entity(hass, mock_config_entry):

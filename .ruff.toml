@@ -2,13 +2,11 @@
 
 target-version = "py312"
 
-extend-exclude = [
-    "custom_components/gree_versati/greeclimate_versati", 
-    "custom_components/gree_versati/greeclimate"
+[lint]
+exclude = [
+    ".ruff_cache",
 ]
 
-
-[lint]
 select = [
     "ALL",
 ]
@@ -20,10 +18,23 @@ ignore = [
     "D212", # multi-line-summary-first-line (incompatible with formatter)
     "COM812", # incompatible with formatter
     "ISC001", # incompatible with formatter
-    "E722", # No bare except 
+    "E722", # No bare except
     "ERA001",
+    "EXE002", # Shebang
     "EM101",
     "TRY300"
+]
+
+# Special rules for test files
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",      # Use of `assert` detected (fine in tests)
+    "ANN001",    # Missing type annotation for function argument
+    "ANN201",    # Missing return type annotation for public function
+    "SLF001",    # Private member accessed (sometimes needed in tests)
+    "PLR2004",   # Magic value used in comparison (often needed in tests)
+    "INP001",    # File is part of an implicit namespace package (fix by adding __init__.py)
+    "D202",      # No blank lines allowed after function docstring
 ]
 
 [lint.flake8-pytest-style]

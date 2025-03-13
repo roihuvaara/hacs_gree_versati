@@ -1,11 +1,11 @@
 """Comprehensive tests for the GreeVersatiClient class."""
 
-import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from greeclimate_versati_fork.awhp_device import AwhpProps
 
 from custom_components.gree_versati.client import GreeVersatiClient
-from greeclimate_versati_fork.awhp_device import AwhpProps
 
 
 @pytest.fixture

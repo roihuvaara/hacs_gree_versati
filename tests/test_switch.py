@@ -1,14 +1,14 @@
 """Test the GreeVersatiSwitch class."""
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from homeassistant.components.switch import SwitchEntityDescription
 
 from custom_components.gree_versati.switch import (
+    ENTITY_DESCRIPTIONS,
     GreeVersatiSwitch,
     async_setup_entry,
-    ENTITY_DESCRIPTIONS,
 )
 
 
