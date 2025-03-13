@@ -31,10 +31,23 @@ ignore = [
     "S101",      # Use of `assert` detected (fine in tests)
     "ANN001",    # Missing type annotation for function argument
     "ANN201",    # Missing return type annotation for public function
+    "ANN202",    # Missing return type annotation for private function
     "SLF001",    # Private member accessed (sometimes needed in tests)
     "PLR2004",   # Magic value used in comparison (often needed in tests)
     "INP001",    # File is part of an implicit namespace package (fix by adding __init__.py)
     "D202",      # No blank lines allowed after function docstring
+    "D401",      # First line of docstring should be in imperative mood
+    "PT009",     # Use regular assert instead of unittest-style assertions (legacy test style)
+    "T201",      # Print statements in tests (helpful for debugging)
+    "BLE001",    # Blind except Exception (acceptable in some test scenarios)
+    "S110",      # Try-except-pass (common in tests for negative testing)
+    "PT011",     # Too broad pytest.raises (may be intentional in some test cases)
+    "E501",      # Line too long (less critical in test files)
+    "ARG002",    # Unused method argument (fixtures often passed but not used in all tests)
+    "E402",      # Module level import not at top of file (common in test setup)
+    "C901",      # Function is too complex (test fixtures often have complex setup)
+    "PLR0915",   # Too many statements (test fixtures often need many setup steps)
+    "FBT002",    # Boolean default positional argument in function definition
 ]
 
 [lint.flake8-pytest-style]

@@ -2,21 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from homeassistant.components.climate import (
-    ClimateEntity,
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
     ClimateEntityFeature,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, LOGGER
-from .coordinator import GreeVersatiDataUpdateCoordinator
+from .const import COOL_MODE, DOMAIN, HEAT_MODE, LOGGER
 from .entity import GreeVersatiEntity
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .client import GreeVersatiClient
+    from .coordinator import GreeVersatiDataUpdateCoordinator
 
 
 async def async_setup_entry(
@@ -34,7 +38,11 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
-    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
+    _attr_hvac_modes: ClassVar[list[HVACMode]] = [
+        HVACMode.OFF,
+        HVACMode.HEAT,
+        HVACMode.COOL,
+    ]
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_OFF
@@ -44,7 +52,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     def __init__(
         self,
         coordinator: GreeVersatiDataUpdateCoordinator,
-        client,
+        client: GreeVersatiClient,
     ) -> None:
         """Initialize the climate device."""
         super().__init__(coordinator)
@@ -52,7 +60,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         self._attr_unique_id = f"gree_versati_{client.mac}"
 
     @property
-    def translation_key(self):
+    def translation_key(self) -> str:
         """Return the translation key to translate the entity's name."""
         return "climate"
 
@@ -82,9 +90,9 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         if not self.coordinator.data.get("power"):
             return HVACMode.OFF
         mode = self.coordinator.data.get("mode")
-        if mode == 4:
+        if mode == HEAT_MODE:
             return HVACMode.HEAT
-        if mode == 1:
+        if mode == COOL_MODE:
             return HVACMode.COOL
         return HVACMode.OFF
 

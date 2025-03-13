@@ -9,3 +9,7 @@ DOMAIN = "gree_versati"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
 
 CONF_IP = "ip"
+
+# HVAC mode constants
+HEAT_MODE = 4
+COOL_MODE = 1

@@ -22,7 +22,7 @@ class GreeVersatiData:
     def __init__(
         self,
         client: GreeVersatiClient,
-        coordinator: GreeVersatiDataUpdateCoordinator,
+        coordinator: GreeVersatiDataUpdateCoordinator | None = None,
     ) -> None:
         """Initialize the data class."""
         self.client = client

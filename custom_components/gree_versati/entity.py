@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
 from .coordinator import GreeVersatiDataUpdateCoordinator
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.device_registry import DeviceInfo
 
 
 class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
@@ -21,7 +26,7 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
         self._attr_unique_id = coordinator.config_entry.entry_id
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         """Return device information."""
         model_series = self.coordinator.data.get("versati_series")
         model_name = f"Versati ({model_series})" if model_series else "Versati"

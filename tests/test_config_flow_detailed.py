@@ -79,7 +79,7 @@ class TestGreeVersatiConfigFlow:
         # Call the user step
         with patch.object(flow, "async_step_bind") as mock_bind_step:
             mock_bind_step.return_value = {"type": "create_entry"}
-            result = await flow.async_step_user({})
+            _ = await flow.async_step_user({})
 
             # Verify bind step was called with the correct MAC
             mock_bind_step.assert_called_once_with({"mac": "AA:BB:CC:DD:EE:FF"})
@@ -118,7 +118,7 @@ class TestGreeVersatiConfigFlow:
         # Call the select_device step
         with patch.object(flow, "async_step_bind") as mock_bind_step:
             mock_bind_step.return_value = {"type": "create_entry"}
-            result = await flow.async_step_select_device({"mac": "AA:BB:CC:DD:EE:FF"})
+            _ = await flow.async_step_select_device({"mac": "AA:BB:CC:DD:EE:FF"})
 
             # Verify bind step was called with the correct MAC
             mock_bind_step.assert_called_once_with({"mac": "AA:BB:CC:DD:EE:FF"})
@@ -131,7 +131,7 @@ class TestGreeVersatiConfigFlow:
         # Call the select_device step with no input
         with patch.object(flow, "async_step_user") as mock_user_step:
             mock_user_step.return_value = {"type": "form"}
-            result = await flow.async_step_select_device(None)
+            _ = await flow.async_step_select_device(None)
 
             # Verify user step was called
             mock_user_step.assert_called_once()

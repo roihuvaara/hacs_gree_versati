@@ -6,6 +6,7 @@ import pytest
 from greeclimate_versati_fork.awhp_device import AwhpProps
 
 from custom_components.gree_versati.client import GreeVersatiClient
+from custom_components.gree_versati.const import COOL_MODE, HEAT_MODE
 
 
 @pytest.fixture
@@ -223,11 +224,11 @@ class TestGreeVersatiClientComprehensive:
             assert client.current_temperature == 45.5
 
             # Test target_temperature in heat mode
-            client._data["mode"] = 4  # Heat mode
+            client._data["mode"] = HEAT_MODE  # Heat mode
             assert client.target_temperature == 45
 
             # Test target_temperature in cool mode
-            client._data["mode"] = 1  # Cool mode
+            client._data["mode"] = COOL_MODE  # Cool mode
             assert client.target_temperature == 22
 
             # Test target_temperature in off mode
@@ -235,11 +236,11 @@ class TestGreeVersatiClientComprehensive:
             assert client.target_temperature is None
 
             # Test hvac_mode in heat mode
-            client._data["mode"] = 4  # Heat mode
+            client._data["mode"] = HEAT_MODE  # Heat mode
             assert client.hvac_mode == "heat"
 
             # Test hvac_mode in cool mode
-            client._data["mode"] = 1  # Cool mode
+            client._data["mode"] = COOL_MODE  # Cool mode
             assert client.hvac_mode == "cool"
 
             # Test hvac_mode in other mode
@@ -296,7 +297,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature in heat mode
-            client._data["mode"] = 4  # Heat mode
+            client._data["mode"] = HEAT_MODE  # Heat mode
             await client.set_temperature(50, mode="heat")
 
             # Verify heat_temp_set was set
@@ -338,7 +339,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature in cool mode
-            client._data["mode"] = 1  # Cool mode
+            client._data["mode"] = COOL_MODE  # Cool mode
             await client.set_temperature(22, mode="cool")
 
             # Verify cool_temp_set was set
@@ -380,7 +381,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature with auto mode detection (heat)
-            client._data["mode"] = 4  # Heat mode
+            client._data["mode"] = HEAT_MODE  # Heat mode
             await client.set_temperature(48)
 
             # Verify heat_temp_set was set
@@ -390,7 +391,7 @@ class TestGreeVersatiClientComprehensive:
             mock_device.push_state_update.reset_mock()
 
             # Set temperature with auto mode detection (cool)
-            client._data["mode"] = 1  # Cool mode
+            client._data["mode"] = COOL_MODE  # Cool mode
             await client.set_temperature(24)
 
             # Verify cool_temp_set was set
@@ -455,14 +456,14 @@ class TestGreeVersatiClientComprehensive:
             # Set HVAC mode to heat
             await client.set_hvac_mode("heat")
 
-            # Verify mode was set to 4 (heat)
-            assert mock_device.mode == 4
+            # Verify mode was set to HEAT_MODE
+            assert mock_device.mode == HEAT_MODE
 
             # Set HVAC mode to cool
             await client.set_hvac_mode("cool")
 
-            # Verify mode was set to 1 (cool)
-            assert mock_device.mode == 1
+            # Verify mode was set to COOL_MODE
+            assert mock_device.mode == COOL_MODE
 
             # Set HVAC mode to off
             await client.set_hvac_mode("off")

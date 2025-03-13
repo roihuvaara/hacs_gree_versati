@@ -3,15 +3,32 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+from typing import Any
 
 from greeclimate_versati_fork.awhp_device import AwhpDevice, AwhpProps
 from greeclimate_versati_fork.deviceinfo import DeviceInfo
 from greeclimate_versati_fork.discovery import Discovery
 
+from .const import COOL_MODE, HEAT_MODE, LOGGER
 from .discovery_listener import DiscoveryListener
 
-LOGGER = logging.getLogger(__name__)
+# Define constants for HVAC mode values are now in const.py
+
+
+class DeviceNotInitializedError(RuntimeError):
+    """Error raised when device is not initialized."""
+
+    def __init__(self) -> None:
+        """Initialize with a default message."""
+        super().__init__("Device not initialized")
+
+
+class NoDevicesDiscoveredError(ConnectionError):
+    """Error raised when no devices are discovered."""
+
+    def __init__(self) -> None:
+        """Initialize with a default message."""
+        super().__init__("No devices discovered")
 
 
 class GreeVersatiClient:
@@ -25,37 +42,48 @@ class GreeVersatiClient:
         key: str | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
+        """
+        Initialize the Gree Versati client.
+
+        Args:
+            ip: The IP address of the device
+            port: The port number of the device
+            mac: The MAC address of the device
+            key: The encryption key for the device
+            loop: The event loop to use
+
+        """
         self.loop = loop or asyncio.get_event_loop()
         self.ip = ip
         self.port = port
         self.mac = mac
         self.key = key
         self.device: AwhpDevice | None = None
-        self._data = {}  # Add cache for device data
+        self._data: dict[str, Any] = {}  # Add cache for device data
 
-    async def async_get_data(self) -> dict:
+    async def async_get_data(self) -> dict[str, Any]:
         """Fetch data from the device."""
         if self.device is None:
             LOGGER.error("Device not initialized")
-            raise Exception("Device not initialized")
+            raise DeviceNotInitializedError
 
         try:
             LOGGER.debug("Starting data fetch from device")
             raw_data = await self.device.get_all_properties()
-            LOGGER.debug(f"Raw data from device: {raw_data}")
+            LOGGER.debug("Raw data from device: %s", raw_data)
 
             # Add debug logging for each temperature calculation
             water_out_temp = self.device.t_water_out_pe(raw_data)
-            LOGGER.debug(f"Water out temp: {water_out_temp}")
+            LOGGER.debug("Water out temp: %s", water_out_temp)
 
             water_in_temp = self.device.t_water_in_pe(raw_data)
-            LOGGER.debug(f"Water in temp: {water_in_temp}")
+            LOGGER.debug("Water in temp: %s", water_in_temp)
 
             hot_water_temp = self.device.hot_water_temp(raw_data)
-            LOGGER.debug(f"Hot water temp: {hot_water_temp}")
+            LOGGER.debug("Hot water temp: %s", hot_water_temp)
 
             opt_water_temp = self.device.t_opt_water(raw_data)
-            LOGGER.debug(f"Optimal water temp: {opt_water_temp}")
+            LOGGER.debug("Optimal water temp: %s", opt_water_temp)
 
             self._data = {
                 # Current temperatures using helper methods with raw data
@@ -85,51 +113,63 @@ class GreeVersatiClient:
                 "versati_series": raw_data.get(AwhpProps.VERSATI_SERIES.value),
             }
 
-            LOGGER.debug(f"Processed data: {self._data}")
+            LOGGER.debug("Processed data: %s", self._data)
             return self._data
 
         except Exception as exc:
-            LOGGER.error(f"Failed to fetch device data: {exc}")
-            raise Exception(f"Failed to fetch device data: {exc}")
+            LOGGER.exception("Failed to fetch device data")
+            error_msg = f"Failed to fetch device data: {exc}"
+            raise RuntimeError(error_msg) from exc
 
     async def initialize(self) -> None:
         """
         Initialize the device connection.
 
         If the connection parameters (ip, port, mac) are provided, create a DeviceInfo
-        and then an AwhpDevice. Then, bind to the device using the stored key if provided.
+        and then an AwhpDevice. Then, bind to the device using the stored key if
+        provided.
         """
         LOGGER.debug("Initializing gree versati")
+
         if self.ip and self.port and self.mac:
             LOGGER.debug(
-                f"Initializing device with IP: {self.ip}, Port: {self.port}, MAC: {self.mac}"
+                "Initializing device with IP: %s, Port: %s, MAC: %s",
+                self.ip,
+                self.port,
+                self.mac,
             )
             # Create the device info from stored parameters.
             device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
             self.device = AwhpDevice(device_info)
+
             try:
                 if self.key:
+                    # Use the provided key to bind.
+                    self.device.device_key = self.key
+                    LOGGER.debug("Re-binding with existing key")
                     await self.device.bind(key=self.key)
                 else:
                     # Bind without a key, letting the device negotiate one.
                     await self.device.bind()
             except Exception as exc:
                 # Handle binding errors as needed.
-                raise Exception(f"Binding failed: {exc}")
+                error_msg = f"Binding failed: {exc}"
+                raise ConnectionError(error_msg) from exc
         else:
             # Optionally, run discovery if connection parameters are not provided.
             devices = await self.run_discovery()
             if devices:
                 self.device = devices[0]
             else:
-                raise Exception("No devices discovered.")
+                raise NoDevicesDiscoveredError
 
     async def run_discovery(self) -> list[AwhpDevice]:
         """
-        Run the device discovery process.
+        Run network discovery to find Gree devices.
 
         This method creates a DiscoveryListener, adds it to a Discovery instance,
-        waits for the scan to finish, and returns a list containing the discovered device (if any).
+        waits for the scan to finish, and returns a list containing the
+        discovered device (if any).
         """
         LOGGER.debug("Scanning network for Gree devices")
         discovery = Discovery()
@@ -145,12 +185,12 @@ class GreeVersatiClient:
         return []
 
     @property
-    def current_temperature(self) -> float:
+    def current_temperature(self) -> float | None:
         """Get the current water temperature."""
         return self._data.get("water_out_temp")
 
     @property
-    def target_temperature(self) -> float:
+    def target_temperature(self) -> float | None:
         """Get the target temperature based on current mode."""
         if self.hvac_mode == "heat":
             return self._data.get("heat_temp_set")
@@ -162,24 +202,25 @@ class GreeVersatiClient:
     def hvac_mode(self) -> str:
         """Get the current HVAC mode."""
         mode = self._data.get("mode")
-        if mode == 4:  # Heat mode
+
+        if mode == HEAT_MODE:  # Heat mode
             return "heat"
-        if mode == 1:  # Cool mode
+        if mode == COOL_MODE:  # Cool mode
             return "cool"
         return "off"
 
     @property
     def is_on(self) -> bool:
         """Return true if the device is on."""
-        return self._data.get("power", False)
+        return bool(self._data.get("power", False))
 
     @property
-    def dhw_temperature(self) -> float:
+    def dhw_temperature(self) -> float | None:
         """Get the current domestic hot water temperature."""
         return self._data.get("hot_water_temp")
 
     @property
-    def dhw_target_temperature(self) -> float:
+    def dhw_target_temperature(self) -> float | None:
         """Get the target domestic hot water temperature."""
         return self._data.get("hot_water_temp_set")
 
@@ -188,7 +229,9 @@ class GreeVersatiClient:
         """Get the current DHW mode."""
         return "performance" if self._data.get("fast_heat_water") else "normal"
 
-    async def set_temperature(self, temperature: float, mode: str = None) -> None:
+    async def set_temperature(
+        self, temperature: float, mode: str | None = None
+    ) -> None:
         """Set the target temperature."""
         if mode == "heat" or (mode is None and self.hvac_mode == "heat"):
             self.device.heat_temp_set = int(temperature)
@@ -207,9 +250,9 @@ class GreeVersatiClient:
     async def set_hvac_mode(self, mode: str) -> None:
         """Set the HVAC mode."""
         if mode == "heat":
-            self.device.mode = 4
+            self.device.mode = HEAT_MODE
         elif mode == "cool":
-            self.device.mode = 1
+            self.device.mode = COOL_MODE
         elif mode == "off":
             self.device.power = False
 

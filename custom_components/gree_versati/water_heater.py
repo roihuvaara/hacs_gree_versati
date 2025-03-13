@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.water_heater import (
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+    from .coordinator import GreeVersatiDataUpdateCoordinator
 
 from .const import DOMAIN, LOGGER
-from .coordinator import GreeVersatiDataUpdateCoordinator
 from .entity import GreeVersatiEntity
 
 OPERATION_LIST = ["normal", "performance"]
@@ -43,7 +46,7 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     def __init__(
         self,
         coordinator: GreeVersatiDataUpdateCoordinator,
-        client,
+        client: Any,
     ) -> None:
         """Initialize the water heater device."""
         super().__init__(coordinator)
@@ -52,7 +55,7 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         self._attr_unique_id = f"gree_versati_{client.mac}"
 
     @property
-    def translation_key(self):
+    def translation_key(self) -> str:
         """Return the translation key to translate the entity's name."""
         return "water_heater"
 
@@ -103,11 +106,17 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set the HVAC mode for the water heater."""
+        target_temp = None
         if hvac_mode == "off":
-            self.target_temperature = None
+            # Set to None to turn off
+            pass  # We'll just pass None to async_set_temperature
         elif self.target_temperature is None:
-            self.target_temperature = 50.0  # default target temperature
-        await self.async_set_temperature(temperature=self.target_temperature)
+            # Set default target temperature if currently None
+            target_temp = 50.0
+        else:
+            target_temp = self.target_temperature
+
+        await self.async_set_temperature(temperature=target_temp)
 
     @property
     def hvac_modes(self) -> list[str]:

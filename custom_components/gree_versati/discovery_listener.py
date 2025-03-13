@@ -1,3 +1,5 @@
+"""Listener for discovering Gree Versati devices on the network."""
+
 import logging
 
 from greeclimate_versati_fork.awhp_device import AwhpDevice
@@ -17,7 +19,7 @@ class DiscoveryListener(Listener):
         self.device: AwhpDevice | None = None
 
     async def device_found(self, device_info: DeviceInfo) -> None:
-        """Called when a new device is found on the network."""
+        """Handle new device discovered on the network."""
         if self.bind and self.device is None:
             # Create a device instance from the discovered info.
             self.device = AwhpDevice(device_info)
@@ -26,9 +28,9 @@ class DiscoveryListener(Listener):
                 await self.device.bind()
                 # Optionally request additional information like firmware version.
                 await self.device.request_version()
-                LOGGER.info(f"Device firmware: {self.device.hid}")
-            except Exception as exc:
-                LOGGER.error("Failed to bind discovered device: %s", exc)
+                LOGGER.info("Device firmware: %s", self.device.hid)
+            except Exception:
+                LOGGER.exception("Failed to bind discovered device")
                 self.device = None
 
     def get_device(self) -> AwhpDevice | None:

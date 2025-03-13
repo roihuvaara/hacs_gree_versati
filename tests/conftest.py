@@ -2,15 +2,15 @@
 
 import asyncio
 import logging
-import os
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 # Add the repository root to the Python path
-repo_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-sys.path.insert(0, repo_root)
+repo_root = Path(__file__).parent.parent.resolve()
+sys.path.insert(0, str(repo_root))
 
 # Import constants from the component
 from pytest_homeassistant_custom_component.common import MockConfigEntry

@@ -17,8 +17,9 @@ class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator):
         """Update data via library."""
         try:
             data = await self.config_entry.runtime_data.client.async_get_data()
-            LOGGER.debug(f"Updated data: {data}")
+            LOGGER.debug("Updated data: %s", data)
             return data
         except Exception as exc:
             LOGGER.error("Error fetching data from device: %s", exc)
-            raise UpdateFailed(f"Error communicating with device: {exc}") from exc
+            error_msg = f"Communication error: {exc}"
+            raise UpdateFailed(error_msg) from exc

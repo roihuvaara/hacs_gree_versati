@@ -10,8 +10,6 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from homeassistant.config_entries import ConfigEntry
-
 # from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
@@ -22,11 +20,8 @@ from .coordinator import GreeVersatiDataUpdateCoordinator
 from .data import GreeVersatiData
 
 if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
-    from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-
-    from .data import GreeVersatiConfigEntry
 
 PLATFORMS: list[Platform] = [
     # Platform.SENSOR,
@@ -42,8 +37,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """
     Set up the integration from YAML if present.
 
-    Since we are using a config flow (UI based configuration), this function only ensures
-    that the integration's data container exists.
+    Since we are using a config flow (UI based configuration), this function only
+    ensures that the integration's data container exists.
     """
     hass.data.setdefault(DOMAIN, {})
     return True
@@ -75,7 +70,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER.debug("Initializing device connection")
         await client.initialize()
         LOGGER.debug("Device initialization successful")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
+        # We catch all exceptions here to ensure setup can fail gracefully
         LOGGER.error("Failed to initialize device '%s' (%s): %s", name, mac, exc)
         return False
 
@@ -103,7 +99,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER.debug("Performing initial data refresh")
         await coordinator.async_config_entry_first_refresh()
         LOGGER.debug("Initial data refresh successful")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
+        # We catch all exceptions here to ensure setup can fail gracefully
         LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
         return False
 

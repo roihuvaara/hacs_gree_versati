@@ -11,16 +11,15 @@ from custom_components.gree_versati.config_flow import GreeVersatiConfigFlow
 from custom_components.gree_versati.const import CONF_IP
 
 
-def assert_form_error(
-    result: dict[str, Any] | None, step_id: str, error: str
-) -> None:
+def assert_form_error(result: dict[str, Any] | None, step_id: str, error: str) -> None:
     """Assert that the result is a form with the expected error."""
     if result is None:
         pytest.fail("Result is None")
     assert result.get("type") == FlowResultType.FORM
     assert result.get("step_id") == step_id
     errors = result.get("errors", {})
-    assert errors and errors.get("base") == error
+    assert errors
+    assert errors.get("base") == error
 
 
 def assert_abort(result: dict[str, Any] | None, reason: str) -> None:
@@ -95,7 +94,8 @@ async def test_user_step_no_devices(hass, mock_run_discovery):
     assert result.get("type") == FlowResultType.FORM
     assert result.get("step_id") == "user"
     errors = result.get("errors", {})
-    assert errors is not None and errors.get("base") == "no_devices_found"
+    assert errors is not None
+    assert errors.get("base") == "no_devices_found"
 
 
 @pytest.mark.asyncio
@@ -119,7 +119,8 @@ async def test_user_step_discovery_error(hass, mock_run_discovery):
     assert result.get("type") == FlowResultType.FORM
     assert result.get("step_id") == "user"
     errors = result.get("errors", {})
-    assert errors is not None and errors.get("base") == "cannot_connect"
+    assert errors is not None
+    assert errors.get("base") == "cannot_connect"
 
 
 @pytest.mark.asyncio
@@ -213,15 +214,17 @@ async def test_select_device_step(hass):
     flow.hass = hass
 
     # Mock the methods that would be called
-    with patch.object(
-        flow, "async_step_user", return_value={"type": FlowResultType.FORM}
-    ):
-        with patch.object(
+    with (
+        patch.object(
+            flow, "async_step_user", return_value={"type": FlowResultType.FORM}
+        ),
+        patch.object(
             flow, "async_step_bind", return_value={"type": FlowResultType.FORM}
-        ):
-            result = await flow.async_step_select_device({"mac": "AA:BB:CC:DD:EE:FF"})
-            assert result is not None
-            assert result.get("type") == FlowResultType.FORM
+        ),
+    ):
+        result = await flow.async_step_select_device({"mac": "AA:BB:CC:DD:EE:FF"})
+        assert result is not None
+        assert result.get("type") == FlowResultType.FORM
 
 
 @pytest.mark.asyncio
