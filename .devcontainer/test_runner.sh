@@ -8,4 +8,4 @@ if [ $# -eq 0 ]; then
 else
   echo "Running specific tests: $@"
   python -m pytest -xvs "$@"
-fi 
+fi

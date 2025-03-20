@@ -1,112 +1,98 @@
-# Notice
+# Gree Versati Integration for Home Assistant
 
-The component and platforms in this repository are not meant to be used by a
-user, but as a "blueprint" that custom component developers can build
-upon, to make more awesome stuff.
+> **Note: Early Development Stage**
+> This integration is in its early development stages. It's functional but may contain bugs or limitations. Use at your own risk and please report any issues you encounter to help improve the integration.
 
-HAVE FUN! 😎
+[![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why?
+This integration enables connection with Gree Versati Air to Water Heat Pumps in Home Assistant.
 
-This is simple, by having custom_components look (README + structure) the same
-it is easier for developers to help each other and for users to start using them.
+## Functionality
 
-If you are a developer and you want to add things to this "blueprint" that you think more
-developers will have use for, please open a PR to add it :)
+- Climate entity for heating and cooling control
+- Water heater entity for domestic hot water control
+- Network auto-discovery of compatible devices
+- Support for multiple operation modes
 
-## What?
+## Supported Entities
 
-This repository contains multiple files, here is a overview:
+| Entity Type | Capabilities |
+|------------|----------|
+| Climate | Temperature control, Mode selection (Heat/Cool/Off) |
+| Water Heater | Temperature control, Mode selection (Normal/Performance) |
 
-File | Purpose | Documentation
--- | -- | --
-`.devcontainer.json` | Used for development/testing with Visual Studio Code. | [Documentation](https://code.visualstudio.com/docs/remote/containers)
-`.github/ISSUE_TEMPLATE/*.yml` | Templates for the issue tracker | [Documentation](https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository)
-`custom_components/integration_blueprint/*` | Integration files, this is where everything happens. | [Documentation](https://developers.home-assistant.io/docs/creating_component_index)
-`CONTRIBUTING.md` | Guidelines on how to contribute. | [Documentation](https://help.github.com/en/github/building-a-strong-community/setting-guidelines-for-repository-contributors)
-`LICENSE` | The license file for the project. | [Documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository)
-`README.md` | The file you are reading now, should contain info about the integration, installation and configuration instructions. | [Documentation](https://help.github.com/en/github/writing-on-github/basic-writing-and-formatting-syntax)
-`requirements.txt` | Python packages used for development/lint/testing this integration. | [Documentation](https://pip.pypa.io/en/stable/user_guide/#requirements-files)
+## Installation
 
-## How?
+### HACS Installation
 
-1. Create a new repository in GitHub, using this repository as a template by clicking the "Use this template" button in the GitHub UI.
-1. Open your new repository in Visual Studio Code devcontainer (Preferably with the "`Dev Containers: Clone Repository in Named Container Volume...`" option).
-1. Rename all instances of the `integration_blueprint` to `custom_components/<your_integration_domain>` (e.g. `custom_components/awesome_integration`).
-1. Rename all instances of the `Integration Blueprint` to `<Your Integration Name>` (e.g. `Awesome Integration`).
-1. Run the `scripts/develop` to start HA and test out your new integration.
+1. Have [HACS](https://hacs.xyz) installed
+2. Add as a custom repository:
+   - Go to HACS → Integrations → "..." menu → Custom repositories
+   - URL: `https://github.com/roihuvaara/hacs_gree_versati`
+   - Category: Integration
+3. Install the integration
+4. Restart Home Assistant
 
-## Next steps
+### Manual Installation
 
-These are some next steps you may want to look into:
-- Add tests to your integration, [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) can help you get started.
-- Add brand images (logo/icon) to https://github.com/home-assistant/brands.
-- Create your first release.
-- Share your integration on the [Home Assistant Forum](https://community.home-assistant.io/).
-- Submit your integration to [HACS](https://hacs.xyz/docs/publish/start).
+1. Copy the `custom_components/gree_versati` folder to your `custom_components` directory
+2. Restart Home Assistant
 
-# Testing with DevContainer
+## Configuration
 
-This project includes a DevContainer configuration to simplify testing in a Linux environment.
+1. Go to Settings → Devices & Services
+2. Click "+ Add Integration" and search for "Gree Versati"
+3. The integration will scan your network for devices
+4. Select your device to complete setup
 
-## Prerequisites
+## Troubleshooting
 
-1. [Visual Studio Code](https://code.visualstudio.com/)
-2. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-3. [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VS Code
-4. A Bash shell (Git Bash, WSL, or any other Bash implementation on Windows)
+Enable debug logging by adding to your `configuration.yaml`:
 
-## Running Tests in DevContainer
-
-### Option 1: Use the Bash Script
-
-The repository includes a Bash script to run tests in the container without having to enter the container yourself:
-
-1. Make sure Docker Desktop is running
-2. Make sure the devcontainer is running in VS Code
-3. Open a Bash shell (Git Bash, WSL, or similar on Windows)
-4. Run the script:
-
-```bash
-# Make script executable (only needed once)
-chmod +x run_tests_in_container.sh
-
-# Run all tests
-./run_tests_in_container.sh
-
-# Run specific tests
-./run_tests_in_container.sh tests/test_climate.py
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.gree_versati: debug
 ```
 
-### Option 2: Enter the Container
+### Common Issues
 
-1. Open the project in VS Code
-2. Click on the green button in the bottom-left corner of the window
-3. Select "Reopen in Container" from the menu
-4. Wait for the container to build and start (this may take a few minutes the first time)
-5. Once the container is running, you can:
-   - Run tests directly from VS Code's Test Explorer
-   - Use the terminal and run `python -m pytest tests/`
-   - Use the included script `.devcontainer/test_runner.sh`
+- **Device Not Found**: Check network connectivity and ensure the device is online
+- **Connection Issues**: Verify UDP port 7000 is not blocked by your firewall
+- **Binding Failed**: May indicate protocol incompatibility with your device model
 
-## Benefits of Using DevContainer
+## Development
 
-- Avoids Windows-specific asyncio loop issues
-- Provides a consistent testing environment
-- Matches the environment used by Home Assistant more closely
-- Eliminates compatibility problems with pytest-socket
+### Development Environment
 
-## Manual Testing
+This project uses DevContainers for development:
 
-From the terminal in the devcontainer:
+1. Clone this repository
+2. Open in VS Code with the Remote Containers extension
+3. Run tests with `pytest tests/`
+
+### Code Quality
+
+Run linting checks before submitting changes:
 
 ```bash
-# Run all tests
-python -m pytest tests/
+# Run checks
+ruff check .
 
-# Run a specific test file
-python -m pytest tests/test_minimal.py
-
-# Run with coverage report
-python -m pytest --cov=custom_components.gree_versati tests/
+# Apply automatic fixes
+ruff check . --fix
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Credits
+
+This integration builds upon work from the [GreeClimate](https://github.com/cmroche/greeclimate) project and adapts it specifically for Gree Versati Air to Water Heat Pumps.
