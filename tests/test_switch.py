@@ -34,9 +34,9 @@ class TestGreeVersatiSwitch:
         switch = GreeVersatiSwitch(coordinator, entity_description)
 
         # Verify the switch was initialized correctly
-        assert switch.entity_description == entity_description
+        assert switch._attr_entity_description == entity_description
         assert switch._attr_unique_id == "test_entry_id"
-        assert switch._client == coordinator.config_entry.runtime_data.client
+        assert switch.coordinator == coordinator
 
     def test_is_on_true(self):
         """Test is_on property when title is 'foo'."""

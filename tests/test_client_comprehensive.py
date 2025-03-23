@@ -301,7 +301,7 @@ class TestGreeVersatiClientComprehensive:
             await client.set_temperature(50, mode="heat")
 
             # Verify heat_temp_set was set
-            assert mock_device.heat_temp_set == 50
+            mock_device.set_property.assert_called_with(AwhpProps.HEAT_TEMP_SET, 50)
 
             # Verify push_state_update was called
             mock_device.push_state_update.assert_called_once()
@@ -343,7 +343,7 @@ class TestGreeVersatiClientComprehensive:
             await client.set_temperature(22, mode="cool")
 
             # Verify cool_temp_set was set
-            assert mock_device.cool_temp_set == 22
+            mock_device.set_property.assert_called_with(AwhpProps.COOL_TEMP_SET, 22)
 
             # Verify push_state_update was called
             mock_device.push_state_update.assert_called_once()
@@ -385,17 +385,18 @@ class TestGreeVersatiClientComprehensive:
             await client.set_temperature(48)
 
             # Verify heat_temp_set was set
-            assert mock_device.heat_temp_set == 48
+            mock_device.set_property.assert_called_with(AwhpProps.HEAT_TEMP_SET, 48)
 
             # Reset mock
             mock_device.push_state_update.reset_mock()
+            mock_device.set_property.reset_mock()
 
             # Set temperature with auto mode detection (cool)
             client._data["mode"] = COOL_MODE  # Cool mode
             await client.set_temperature(24)
 
             # Verify cool_temp_set was set
-            assert mock_device.cool_temp_set == 24
+            mock_device.set_property.assert_called_with(AwhpProps.COOL_TEMP_SET, 24)
 
     @pytest.mark.asyncio
     async def test_set_dhw_temperature(
@@ -427,7 +428,9 @@ class TestGreeVersatiClientComprehensive:
             await client.set_dhw_temperature(55)
 
             # Verify hot_water_temp_set was set
-            assert mock_device.hot_water_temp_set == 55
+            mock_device.set_property.assert_called_with(
+                AwhpProps.HOT_WATER_TEMP_SET, 55
+            )
 
     @pytest.mark.asyncio
     async def test_set_hvac_mode(self, mock_device, mock_device_info, client_config):
@@ -456,20 +459,28 @@ class TestGreeVersatiClientComprehensive:
             # Set HVAC mode to heat
             await client.set_hvac_mode("heat")
 
-            # Verify mode was set to HEAT_MODE
-            assert mock_device.mode == HEAT_MODE
+            # Verify mode was set to HEAT_MODE and power was set to True
+            mock_device.set_property.assert_any_call(AwhpProps.MODE, HEAT_MODE)
+            mock_device.set_property.assert_any_call(AwhpProps.POWER, value=True)
+
+            # Reset mock
+            mock_device.set_property.reset_mock()
 
             # Set HVAC mode to cool
             await client.set_hvac_mode("cool")
 
-            # Verify mode was set to COOL_MODE
-            assert mock_device.mode == COOL_MODE
+            # Verify mode was set to COOL_MODE and power was set to True
+            mock_device.set_property.assert_any_call(AwhpProps.MODE, COOL_MODE)
+            mock_device.set_property.assert_any_call(AwhpProps.POWER, value=True)
+
+            # Reset mock
+            mock_device.set_property.reset_mock()
 
             # Set HVAC mode to off
             await client.set_hvac_mode("off")
 
             # Verify power was set to False
-            assert mock_device.power is False
+            mock_device.set_property.assert_called_with(AwhpProps.POWER, value=False)
 
     @pytest.mark.asyncio
     async def test_set_dhw_mode(self, mock_device, mock_device_info, client_config):
@@ -499,10 +510,17 @@ class TestGreeVersatiClientComprehensive:
             await client.set_dhw_mode("performance")
 
             # Verify fast_heat_water was set to True
-            assert mock_device.fast_heat_water is True
+            mock_device.set_property.assert_called_with(
+                AwhpProps.FAST_HEAT_WATER, value=True
+            )
+
+            # Reset mock
+            mock_device.set_property.reset_mock()
 
             # Set DHW mode to normal
             await client.set_dhw_mode("normal")
 
             # Verify fast_heat_water was set to False
-            assert mock_device.fast_heat_water is False
+            mock_device.set_property.assert_called_with(
+                AwhpProps.FAST_HEAT_WATER, value=False
+            )

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceInfo
 
-from .entity import GreeVersatiEntity
+from .const import ATTRIBUTION, DOMAIN
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -14,6 +17,23 @@ if TYPE_CHECKING:
 
     from .coordinator import GreeVersatiDataUpdateCoordinator
     from .data import GreeVersatiConfigEntry
+
+
+class NoEntryIdError(HomeAssistantError):
+    """Error when entry ID is not available."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("No entry ID available")
+
+
+class NoRuntimeDataError(HomeAssistantError):
+    """Error when runtime data is not available."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("No runtime data available")
+
 
 ENTITY_DESCRIPTIONS = (
     SwitchEntityDescription(
@@ -30,17 +50,25 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the switch platform."""
+    coordinator = entry.runtime_data.coordinator
+    if not coordinator:
+        return
+
     async_add_entities(
         GreeVersatiSwitch(
-            coordinator=entry.runtime_data.coordinator,
+            coordinator=coordinator,
             entity_description=entity_description,
         )
         for entity_description in ENTITY_DESCRIPTIONS
     )
 
 
-class GreeVersatiSwitch(GreeVersatiEntity, SwitchEntity):
+class GreeVersatiSwitch(SwitchEntity):
     """gree_versati switch class."""
+
+    _attr_attribution: str | None = ATTRIBUTION
+    _attr_has_entity_name: bool = True
+    _attr_entity_description: SwitchEntityDescription
 
     def __init__(
         self,
@@ -48,20 +76,65 @@ class GreeVersatiSwitch(GreeVersatiEntity, SwitchEntity):
         entity_description: SwitchEntityDescription,
     ) -> None:
         """Initialize the switch class."""
-        super().__init__(coordinator)
-        self.entity_description = entity_description
+        self.coordinator = coordinator
+        self._attr_entity_description = entity_description
+        if not coordinator.config_entry.entry_id:
+            raise NoEntryIdError
+        self._attr_unique_id = coordinator.config_entry.entry_id
 
-    @property
+    @cached_property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @cached_property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        if not self.coordinator.data:
+            return DeviceInfo(
+                identifiers={
+                    (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
+                },
+                name=self.coordinator.config_entry.title or "Unknown",
+                manufacturer="Gree",
+                model="Versati",
+            )
+
+        model_series = self.coordinator.data.get("versati_series")
+        model_name = f"Versati ({model_series})" if model_series else "Versati"
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
+            },
+            name=self.coordinator.config_entry.title or "Unknown",
+            manufacturer="Gree",
+            model=model_name,
+        )
+
+    @cached_property
     def is_on(self) -> bool:
         """Return true if the switch is on."""
+        if not self.coordinator.data:
+            return False
         return self.coordinator.data.get("title", "") == "foo"
 
-    async def async_turn_on(self, **_: Any) -> None:
-        """Turn on the switch."""
+    async def async_turn_on(self, **kwargs: Any) -> None:  # noqa: ARG002
+        """Turn the switch on."""
+        if (
+            not hasattr(self.coordinator.config_entry, "runtime_data")
+            or not self.coordinator.config_entry.runtime_data
+        ):
+            raise NoRuntimeDataError
         await self.coordinator.config_entry.runtime_data.client.async_set_title("bar")
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **_: Any) -> None:
-        """Turn off the switch."""
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+        """Turn the switch off."""
+        if (
+            not hasattr(self.coordinator.config_entry, "runtime_data")
+            or not self.coordinator.config_entry.runtime_data
+        ):
+            raise NoRuntimeDataError
         await self.coordinator.config_entry.runtime_data.client.async_set_title("foo")
         await self.coordinator.async_request_refresh()

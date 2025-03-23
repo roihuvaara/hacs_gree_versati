@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+from homeassistant.helpers.device_registry import DeviceInfo
+
 from custom_components.gree_versati.const import ATTRIBUTION, DOMAIN
 from custom_components.gree_versati.entity import GreeVersatiEntity
 
@@ -42,11 +44,16 @@ class TestGreeVersatiEntity:
         # Get device info
         device_info = entity.device_info
 
+        # Create expected device info
+        expected_device_info = DeviceInfo(
+            identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            name="Test Device",
+            manufacturer="Gree",
+            model="Versati (III)",
+        )
+
         # Verify device info
-        assert device_info["identifiers"] == {(DOMAIN, "AA:BB:CC:DD:EE:FF")}
-        assert device_info["name"] == "Test Device"
-        assert device_info["manufacturer"] == "Gree"
-        assert device_info["model"] == "Versati (III)"
+        assert device_info == expected_device_info
 
     def test_device_info_without_series(self):
         """Test device_info property without versati series."""
@@ -64,8 +71,13 @@ class TestGreeVersatiEntity:
         # Get device info
         device_info = entity.device_info
 
+        # Create expected device info
+        expected_device_info = DeviceInfo(
+            identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            name="Test Device",
+            manufacturer="Gree",
+            model="Versati",
+        )
+
         # Verify device info
-        assert device_info["identifiers"] == {(DOMAIN, "AA:BB:CC:DD:EE:FF")}
-        assert device_info["name"] == "Test Device"
-        assert device_info["manufacturer"] == "Gree"
-        assert device_info["model"] == "Versati"
+        assert device_info == expected_device_info

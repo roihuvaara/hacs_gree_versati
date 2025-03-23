@@ -2,20 +2,27 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceInfo
 
-from .entity import GreeVersatiEntity
+from .const import ATTRIBUTION, DOMAIN
 
 if TYPE_CHECKING:
+    from datetime import date, datetime
+    from decimal import Decimal
+
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.typing import StateType
 
     from .coordinator import GreeVersatiDataUpdateCoordinator
     from .data import GreeVersatiConfigEntry
 
-ENTITY_DESCRIPTIONS = (
+ENTITY_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="gree_versati",
         name="Integration Sensor",
@@ -30,17 +37,34 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
+    coordinator = entry.runtime_data.coordinator
+    if not coordinator:
+        return
+
     async_add_entities(
         GreeVersatiSensor(
-            coordinator=entry.runtime_data.coordinator,
+            coordinator=coordinator,
             entity_description=entity_description,
         )
         for entity_description in ENTITY_DESCRIPTIONS
     )
 
 
-class GreeVersatiSensor(GreeVersatiEntity, SensorEntity):
+class NoEntryIdError(HomeAssistantError):
+    """Error when entry ID is not available."""
+
+    def __init__(self) -> None:
+        """Initialize the error."""
+        super().__init__("No entry ID available")
+
+
+class GreeVersatiSensor(SensorEntity):
     """gree_versati Sensor class."""
+
+    _attr_attribution: str | None = ATTRIBUTION
+    _attr_has_entity_name: bool = True
+    _attr_entity_description: SensorEntityDescription
+    _attr_native_value: StateType | date | datetime | Decimal | None = None
 
     def __init__(
         self,
@@ -48,10 +72,45 @@ class GreeVersatiSensor(GreeVersatiEntity, SensorEntity):
         entity_description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor class."""
-        super().__init__(coordinator)
-        self.entity_description = entity_description
+        self.coordinator = coordinator
+        self._attr_entity_description = entity_description
+        if not coordinator.config_entry.entry_id:
+            raise NoEntryIdError
+        self._attr_unique_id = coordinator.config_entry.entry_id
 
-    @property
-    def native_value(self) -> str | None:
+    @cached_property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @cached_property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        if not self.coordinator.data:
+            return DeviceInfo(
+                identifiers={
+                    (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
+                },
+                name=self.coordinator.config_entry.title or "Unknown",
+                manufacturer="Gree",
+                model="Versati",
+            )
+
+        model_series = self.coordinator.data.get("versati_series")
+        model_name = f"Versati ({model_series})" if model_series else "Versati"
+
+        return DeviceInfo(
+            identifiers={
+                (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
+            },
+            name=self.coordinator.config_entry.title or "Unknown",
+            manufacturer="Gree",
+            model=model_name,
+        )
+
+    @cached_property
+    def native_value(self) -> StateType | date | datetime | Decimal | None:
         """Return the native value of the sensor."""
+        if not self.coordinator.data:
+            return None
         return self.coordinator.data.get("body")

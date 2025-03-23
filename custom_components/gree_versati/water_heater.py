@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.water_heater import (
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
     from .coordinator import GreeVersatiDataUpdateCoordinator
 
 from .const import DOMAIN, LOGGER
-from .entity import GreeVersatiEntity
 
 OPERATION_LIST = ["normal", "performance"]
 
@@ -33,7 +33,7 @@ async def async_setup_entry(
     async_add_entities([GreeVersatiWaterHeater(data.coordinator, data.client)])
 
 
-class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
+class GreeVersatiWaterHeater(WaterHeaterEntity):
     """Representation of a Gree Versati Water Heater device."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
@@ -49,37 +49,42 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         client: Any,
     ) -> None:
         """Initialize the water heater device."""
-        super().__init__(coordinator)
+        self.coordinator = coordinator
         self._client = client
         # Simplified unique ID
         self._attr_unique_id = f"gree_versati_{client.mac}"
 
-    @property
-    def translation_key(self) -> str:
+    @cached_property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @cached_property
+    def translation_key(self) -> str | None:
         """Return the translation key to translate the entity's name."""
         return "water_heater"
 
-    @property
+    @cached_property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
         temp = self.coordinator.data.get("hot_water_temp")
-        LOGGER.debug(f"DHW current temperature: {temp}")
+        LOGGER.debug("DHW current temperature: %s", temp)
         return temp
 
-    @property
+    @cached_property
     def target_temperature(self) -> float | None:
         """Return the target temperature."""
         temp = self.coordinator.data.get("hot_water_temp_set")
-        LOGGER.debug(f"DHW target temperature: {temp}")
+        LOGGER.debug("DHW target temperature: %s", temp)
         return temp
 
-    @property
+    @cached_property
     def current_operation(self) -> str | None:
         """Return current operation."""
         mode = (
             "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
         )
-        LOGGER.debug(f"DHW operation mode: {mode}")
+        LOGGER.debug("DHW operation mode: %s", mode)
         return mode
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -94,8 +99,8 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         await self._client.set_dhw_mode(operation_mode)
         await self.coordinator.async_request_refresh()
 
-    @property
-    def hvac_mode(self) -> str:
+    @cached_property
+    def hvac_mode(self) -> str | None:
         """
         Return the current HVAC mode.
 

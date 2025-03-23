@@ -5,6 +5,7 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
 
 from .client import GreeVersatiClient
@@ -21,54 +22,48 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> ConfigFlowResult:
         """Handle the initial step of the configuration flow."""
-        errors = {}
+        errors: dict[str, str] = {}
+
         if user_input is not None:
-            client = GreeVersatiClient()
+            if user_input.get("mac"):
+                return await self.async_step_bind(user_input)
+
             try:
+                client = GreeVersatiClient()
                 devices = await client.run_discovery()
-            except Exception:
-                _LOGGER.exception("Error during device discovery")
-                errors["base"] = "cannot_connect"
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=vol.Schema({}),
-                    errors=errors,
-                )
+                if not devices:
+                    errors["base"] = "no_devices_found"
+                else:
+                    # If exactly one device is discovered, proceed to bind immediately
+                    if len(devices) == 1:
+                        device = devices[0]
+                        return await self.async_step_bind(
+                            {"mac": device.device_info.mac}
+                        )
 
-            if not devices:
-                errors["base"] = "no_devices_found"
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=vol.Schema({}),
-                    errors=errors,
-                )
-
-            # If exactly one device is discovered, proceed to bind immediately.
-            if len(devices) == 1:
-                device = devices[0]
-                return await self.async_step_bind({"mac": device.device_info.mac})
-
-            # If more than one device is found, let the user choose which one to bind.
-            device_options = {}
-            for device in devices:
-                device_info = device.device_info
-                device_options[device_info.mac] = (
-                    f"{device_info.name} ({device_info.ip})"
-                )
-
-            return self.async_show_form(
-                step_id="select_device",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required("mac"): vol.In(device_options),
+                    # If more than one device is found, let the user choose which one
+                    # to bind
+                    device_options = {
+                        device.device_info.mac: (
+                            f"{device.device_info.name} ({device.device_info.mac})"
+                        )
+                        for device in devices
                     }
-                ),
-                errors=errors,
-            )
+                    return self.async_show_form(
+                        step_id="select_device",
+                        data_schema=vol.Schema(
+                            {
+                                vol.Required("mac"): vol.In(device_options),
+                            }
+                        ),
+                        errors=errors,
+                    )
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to discover devices")
+                errors["base"] = "cannot_connect"
 
-        # If no user input yet, display a simple form.
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({}),
@@ -77,14 +72,14 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_select_device(
         self, user_input: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> ConfigFlowResult:
         """Handle device selection when multiple devices are discovered."""
         if user_input is None:
             return await self.async_step_user()
         return await self.async_step_bind(user_input)
 
-    async def async_step_bind(self, user_input: dict[str, Any]) -> dict[str, Any]:
-        """Bind to the device by negotiating the key."""
+    async def async_step_bind(self, user_input: dict[str, Any]) -> ConfigFlowResult:
+        """Handle binding to a device."""
         mac = user_input.get("mac")
         if not mac:
             return self.async_abort(reason="invalid_device")
@@ -106,15 +101,16 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Error during binding with device %s", mac)
             return self.async_abort(reason="bind_failed")
 
-        await self.async_set_unique_id(device.device_info.mac)
+        await self.async_set_unique_id(mac)
         self._abort_if_unique_id_configured()
 
-        config_data = {
-            CONF_IP: device.device_info.ip,
-            CONF_PORT: device.device_info.port,
-            CONF_MAC: device.device_info.mac,
-            CONF_NAME: device.device_info.name,
-            "key": key,
-        }
-
-        return self.async_create_entry(title="Gree Versati", data=config_data)
+        return self.async_create_entry(
+            title="Gree Versati",
+            data={
+                CONF_IP: device.device_info.ip,
+                CONF_PORT: device.device_info.port,
+                CONF_MAC: device.device_info.mac,
+                CONF_NAME: device.device_info.name,
+                "key": key,
+            },
+        )

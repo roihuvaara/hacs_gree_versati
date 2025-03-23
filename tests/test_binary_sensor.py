@@ -7,12 +7,14 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntityDescription,
 )
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.gree_versati.binary_sensor import (
     ENTITY_DESCRIPTIONS,
     GreeVersatiBinarySensor,
     async_setup_entry,
 )
+from custom_components.gree_versati.const import DOMAIN
 
 
 class TestGreeVersatiBinarySensor:
@@ -39,7 +41,7 @@ class TestGreeVersatiBinarySensor:
         # Verify the binary sensor was initialized correctly
         assert binary_sensor.entity_description == entity_description
         assert binary_sensor._attr_unique_id == "test_entry_id"
-        assert binary_sensor._client == coordinator.config_entry.runtime_data.client
+        assert binary_sensor.coordinator == coordinator
 
     def test_is_on_true(self):
         """Test is_on property when title is 'foo'."""
@@ -94,6 +96,60 @@ class TestGreeVersatiBinarySensor:
 
         # Verify is_on is False when title is missing
         assert binary_sensor.is_on is False
+
+    def test_device_info_with_series(self):
+        """Test device_info property with versati series."""
+        # Create a mock coordinator with data
+        coordinator = MagicMock()
+        coordinator.data = {"versati_series": "III"}
+        coordinator.config_entry.title = "Test Device"
+        coordinator.config_entry.runtime_data.client.mac = "AA:BB:CC:DD:EE:FF"
+
+        # Create entity description
+        entity_description = BinarySensorEntityDescription(
+            key="test_binary_sensor",
+            name="Test Binary Sensor",
+        )
+
+        # Create the binary sensor
+        binary_sensor = GreeVersatiBinarySensor(coordinator, entity_description)
+
+        # Verify device info
+        device_info = binary_sensor.device_info
+        expected_info = DeviceInfo(
+            identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            name="Test Device",
+            manufacturer="Gree",
+            model="Versati (III)",
+        )
+        assert device_info == expected_info
+
+    def test_device_info_without_series(self):
+        """Test device_info property without versati series."""
+        # Create a mock coordinator with data
+        coordinator = MagicMock()
+        coordinator.data = {}  # No versati_series
+        coordinator.config_entry.title = "Test Device"
+        coordinator.config_entry.runtime_data.client.mac = "AA:BB:CC:DD:EE:FF"
+
+        # Create entity description
+        entity_description = BinarySensorEntityDescription(
+            key="test_binary_sensor",
+            name="Test Binary Sensor",
+        )
+
+        # Create the binary sensor
+        binary_sensor = GreeVersatiBinarySensor(coordinator, entity_description)
+
+        # Verify device info
+        device_info = binary_sensor.device_info
+        expected_info = DeviceInfo(
+            identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            name="Test Device",
+            manufacturer="Gree",
+            model="Versati",
+        )
+        assert device_info == expected_info
 
     @pytest.mark.asyncio
     async def test_async_setup_entry(self):

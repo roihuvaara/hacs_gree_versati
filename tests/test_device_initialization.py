@@ -11,17 +11,19 @@ from custom_components.gree_versati.client import GreeVersatiClient
 
 @pytest.mark.asyncio
 async def test_device_initialization_success(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
 ):
     """Test that device initialization succeeds with proper parameters."""
     # Create a mock device
     mock_device = MagicMock()
-    mock_device.bind = AsyncMock(return_value=None)
+    mock_device.bind = AsyncMock()
 
     # Patch the AwhpDevice and DeviceInfo classes
     with (
         patch(
-            "custom_components.gree_versati.client.AwhpDevice", return_value=mock_device
+            "custom_components.gree_versati.client.AwhpDevice",
+            return_value=mock_device,
         ),
         patch("custom_components.gree_versati.client.DeviceInfo"),
     ):
@@ -41,25 +43,29 @@ async def test_device_initialization_success(
         assert client.device == mock_device
 
         # Verify bind was called with the correct key
-        client.device.bind.assert_called_once_with(key=mock_config_entry.data["key"])
+        mock_bind = mock_device.bind
+        assert mock_bind.call_count == 1
+        assert mock_bind.call_args.kwargs == {"key": mock_config_entry.data["key"]}
 
 
 @pytest.mark.asyncio
 async def test_device_initialization_failure_missing_cipher(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
 ):
     """Test that device initialization fails when cipher is missing but key is provided."""
     # Create a mock device
     mock_device = MagicMock()
     # Simulate the error we're seeing in the logs
     mock_device.bind = AsyncMock(
-        side_effect=Exception("cipher must be provided when key is provided")
+        side_effect=Exception("cipher must be provided when key is provided"),
     )
 
     # Patch the AwhpDevice and DeviceInfo classes
     with (
         patch(
-            "custom_components.gree_versati.client.AwhpDevice", return_value=mock_device
+            "custom_components.gree_versati.client.AwhpDevice",
+            return_value=mock_device,
         ),
         patch("custom_components.gree_versati.client.DeviceInfo"),
     ):
@@ -77,7 +83,7 @@ async def test_device_initialization_failure_missing_cipher(
 
         # Verify the exception message
         assert "Binding failed: cipher must be provided when key is provided" in str(
-            excinfo.value
+            excinfo.value,
         )
 
 
@@ -96,13 +102,14 @@ async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
     # Create a real client but mock the device
     mock_device = MagicMock()
     mock_device.bind = AsyncMock(
-        side_effect=Exception("cipher must be provided when key is provided")
+        side_effect=Exception("cipher must be provided when key is provided"),
     )
 
     # Patch the necessary classes
     with (
         patch(
-            "custom_components.gree_versati.client.AwhpDevice", return_value=mock_device
+            "custom_components.gree_versati.client.AwhpDevice",
+            return_value=mock_device,
         ),
         patch("custom_components.gree_versati.client.DeviceInfo"),
     ):
@@ -121,4 +128,6 @@ async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
         assert result is False
 
         # Verify the device.bind method was called
-        mock_device.bind.assert_called_once_with(key=entry_data["key"])
+        mock_bind = mock_device.bind
+        assert mock_bind.call_count == 1
+        assert mock_bind.call_args.kwargs == {"key": entry_data["key"]}

@@ -34,9 +34,9 @@ class TestGreeVersatiSensor:
         sensor = GreeVersatiSensor(coordinator, entity_description)
 
         # Verify the sensor was initialized correctly
-        assert sensor.entity_description == entity_description
+        assert sensor._attr_entity_description == entity_description
         assert sensor._attr_unique_id == "test_entry_id"
-        assert sensor._client == coordinator.config_entry.runtime_data.client
+        assert sensor.coordinator == coordinator
 
     def test_native_value(self):
         """Test native_value property."""

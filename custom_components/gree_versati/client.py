@@ -233,32 +233,52 @@ class GreeVersatiClient:
         self, temperature: float, mode: str | None = None
     ) -> None:
         """Set the target temperature."""
+        if self.device is None:
+            raise DeviceNotInitializedError
+
         if mode == "heat" or (mode is None and self.hvac_mode == "heat"):
-            self.device.heat_temp_set = int(temperature)
+            self.device.set_property(AwhpProps.HEAT_TEMP_SET, int(temperature))
         elif mode == "cool" or (mode is None and self.hvac_mode == "cool"):
-            self.device.cool_temp_set = int(temperature)
+            self.device.set_property(AwhpProps.COOL_TEMP_SET, int(temperature))
 
         await self.device.push_state_update()
-
-        # Optionally refresh data after setting
         await self.async_get_data()
 
     async def set_dhw_temperature(self, temperature: float) -> None:
         """Set the target DHW temperature."""
-        self.device.hot_water_temp_set = int(temperature)
+        if self.device is None:
+            raise DeviceNotInitializedError
+
+        self.device.set_property(AwhpProps.HOT_WATER_TEMP_SET, int(temperature))
+        await self.device.push_state_update()
+        await self.async_get_data()
 
     async def set_hvac_mode(self, mode: str) -> None:
         """Set the HVAC mode."""
+        if self.device is None:
+            raise DeviceNotInitializedError
+
         if mode == "heat":
-            self.device.mode = HEAT_MODE
+            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
         elif mode == "cool":
-            self.device.mode = COOL_MODE
+            self.device.set_property(AwhpProps.MODE, COOL_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
         elif mode == "off":
-            self.device.power = False
+            self.device.set_property(AwhpProps.POWER, value=False)
+
+        await self.device.push_state_update()
+        await self.async_get_data()
 
     async def set_dhw_mode(self, mode: str) -> None:
         """Set the DHW mode."""
+        if self.device is None:
+            raise DeviceNotInitializedError
+
         if mode == "performance":
-            self.device.fast_heat_water = True
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=True)
         elif mode == "normal":
-            self.device.fast_heat_water = False
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=False)
+
+        await self.device.push_state_update()
+        await self.async_get_data()

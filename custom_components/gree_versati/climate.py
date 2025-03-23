@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from functools import cached_property
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
@@ -12,7 +13,6 @@ from homeassistant.components.climate.const import (
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
 from .const import COOL_MODE, DOMAIN, HEAT_MODE, LOGGER
-from .entity import GreeVersatiEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -33,16 +33,11 @@ async def async_setup_entry(
     async_add_entities([GreeVersatiClimate(data.coordinator, data.client)])
 
 
-class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
+class GreeVersatiClimate(ClimateEntity):
     """Representation of a Gree Versati Climate device."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
-    _attr_hvac_modes: ClassVar[list[HVACMode]] = [
-        HVACMode.OFF,
-        HVACMode.HEAT,
-        HVACMode.COOL,
-    ]
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_OFF
@@ -55,36 +50,46 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         client: GreeVersatiClient,
     ) -> None:
         """Initialize the climate device."""
-        super().__init__(coordinator)
+        self.coordinator = coordinator
         self._client = client
         self._attr_unique_id = f"gree_versati_{client.mac}"
+        self._attr_hvac_modes = [
+            HVACMode.OFF,
+            HVACMode.HEAT,
+            HVACMode.COOL,
+        ]
 
-    @property
+    @cached_property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success
+
+    @cached_property
     def translation_key(self) -> str:
         """Return the translation key to translate the entity's name."""
         return "climate"
 
-    @property
+    @cached_property
     def current_temperature(self) -> float | None:
         """Return the current temperature."""
         temp = self.coordinator.data.get("water_out_temp")
-        LOGGER.debug(f"Current temperature: {temp}")
+        LOGGER.debug("Current temperature: %s", temp)
         return temp
 
-    @property
+    @cached_property
     def target_temperature(self) -> float | None:
         """Return the target temperature."""
         if self.hvac_mode == HVACMode.HEAT:
             temp = self.coordinator.data.get("heat_temp_set")
-            LOGGER.debug(f"Target heat temperature: {temp}")
+            LOGGER.debug("Target heat temperature: %s", temp)
             return temp
         if self.hvac_mode == HVACMode.COOL:
             temp = self.coordinator.data.get("cool_temp_set")
-            LOGGER.debug(f"Target cool temperature: {temp}")
+            LOGGER.debug("Target cool temperature: %s", temp)
             return temp
         return None
 
-    @property
+    @cached_property
     def hvac_mode(self) -> HVACMode:
         """Return hvac operation mode."""
         if not self.coordinator.data.get("power"):
