@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from greeclimate_versati_fork.awhp_device import AwhpProps
+from gree_versati.awhp_device import AwhpProps
 
 from custom_components.gree_versati.client import GreeVersatiClient
 from custom_components.gree_versati.const import COOL_MODE, HEAT_MODE

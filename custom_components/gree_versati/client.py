@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from greeclimate_versati_fork.awhp_device import AwhpDevice, AwhpProps
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
-from greeclimate_versati_fork.discovery import Discovery
+from gree_versati.awhp_device import AwhpDevice, AwhpProps
+from gree_versati.deviceinfo import DeviceInfo
+from gree_versati.discovery import Discovery
 
 from .const import COOL_MODE, HEAT_MODE, LOGGER
 from .discovery_listener import DiscoveryListener

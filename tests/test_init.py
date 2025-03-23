@@ -14,7 +14,7 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry: MockConfigEnt
     """Test successful setup of config entry."""
     # Mock the API client to avoid actual network calls
     with patch(
-        "custom_components.gree_versati.client.GreeVersatiClient"
+        "custom_components.gree_versati.client.GreeVersatiClient",
     ) as mock_client_class:
         # Configure the mock to return success
         mock_client_instance = MagicMock()
@@ -35,11 +35,12 @@ async def test_setup_entry(hass: HomeAssistant, mock_config_entry: MockConfigEnt
 
 @pytest.mark.asyncio
 async def test_setup_entry_fails_cannot_connect(
-    hass: HomeAssistant, mock_config_entry: MockConfigEntry
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
 ):
     """Test failed setup when connection fails."""
     with patch(
-        "custom_components.gree_versati.client.GreeVersatiClient"
+        "custom_components.gree_versati.client.GreeVersatiClient",
     ) as mock_client_class:
         # Configure the mock to return failure
         mock_client_instance = MagicMock()

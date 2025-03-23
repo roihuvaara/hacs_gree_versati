@@ -114,7 +114,7 @@ class TestGreeVersatiSwitch:
 
         # Verify client.async_set_title was called with 'bar'
         coordinator.config_entry.runtime_data.client.async_set_title.assert_called_once_with(
-            "bar"
+            "bar",
         )
 
         # Verify coordinator.async_request_refresh was called
@@ -142,7 +142,7 @@ class TestGreeVersatiSwitch:
 
         # Verify client.async_set_title was called with 'foo'
         coordinator.config_entry.runtime_data.client.async_set_title.assert_called_once_with(
-            "foo"
+            "foo",
         )
 
         # Verify coordinator.async_request_refresh was called

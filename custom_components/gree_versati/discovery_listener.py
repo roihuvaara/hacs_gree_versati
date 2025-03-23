@@ -2,9 +2,9 @@
 
 import logging
 
-from greeclimate_versati_fork.awhp_device import AwhpDevice
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
-from greeclimate_versati_fork.discovery import Listener
+from gree_versati.awhp_device import AwhpDevice
+from gree_versati.deviceinfo import DeviceInfo
+from gree_versati.discovery import Listener
 
 LOGGER = logging.getLogger(__name__)
 

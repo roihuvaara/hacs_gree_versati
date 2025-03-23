@@ -3,8 +3,8 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from greeclimate_versati_fork.awhp_device import AwhpDevice
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
+from gree_versati.awhp_device import AwhpDevice
+from gree_versati.deviceinfo import DeviceInfo
 
 from custom_components.gree_versati.client import GreeVersatiClient
 from custom_components.gree_versati.discovery_listener import DiscoveryListener
@@ -42,7 +42,7 @@ class TestDiscoveryListener:
         """Test successful device discovery and binding."""
         # Mock AwhpDevice to return our mock device
         with patch(
-            "custom_components.gree_versati.discovery_listener.AwhpDevice"
+            "custom_components.gree_versati.discovery_listener.AwhpDevice",
         ) as mock_awhp:
             # Configure the mock to return a device that can be successfully bound
             mock_device = MagicMock()
@@ -72,7 +72,7 @@ class TestDiscoveryListener:
         """Test device discovery with binding failure."""
         # Mock AwhpDevice to return our mock device
         with patch(
-            "custom_components.gree_versati.discovery_listener.AwhpDevice"
+            "custom_components.gree_versati.discovery_listener.AwhpDevice",
         ) as mock_awhp:
             # Configure the mock to fail during binding
             mock_device = MagicMock()
@@ -132,10 +132,10 @@ class TestClientDiscovery:
         # Mock Discovery and DiscoveryListener
         with (
             patch(
-                "custom_components.gree_versati.client.Discovery"
+                "custom_components.gree_versati.client.Discovery",
             ) as mock_discovery_cls,
             patch(
-                "custom_components.gree_versati.client.DiscoveryListener"
+                "custom_components.gree_versati.client.DiscoveryListener",
             ) as mock_listener_cls,
         ):
             # Configure the mocks
@@ -176,10 +176,10 @@ class TestClientDiscovery:
         # Mock Discovery and DiscoveryListener
         with (
             patch(
-                "custom_components.gree_versati.client.Discovery"
+                "custom_components.gree_versati.client.Discovery",
             ) as mock_discovery_cls,
             patch(
-                "custom_components.gree_versati.client.DiscoveryListener"
+                "custom_components.gree_versati.client.DiscoveryListener",
             ) as mock_listener_cls,
         ):
             # Configure the mocks
@@ -203,7 +203,7 @@ class TestClientDiscovery:
         """Test device discovery when an exception occurs."""
         # Mock Discovery to raise an exception
         with patch(
-            "custom_components.gree_versati.client.Discovery"
+            "custom_components.gree_versati.client.Discovery",
         ) as mock_discovery_cls:
             # Configure the mock to raise an exception
             mock_discovery = MagicMock()

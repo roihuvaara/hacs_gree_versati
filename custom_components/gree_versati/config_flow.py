@@ -39,6 +39,13 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     # If exactly one device is discovered, proceed to bind immediately
                     if len(devices) == 1:
                         device = devices[0]
+                        if device.device_info is None:
+                            errors["base"] = "invalid_device"
+                            return self.async_show_form(
+                                step_id="user",
+                                data_schema=vol.Schema({}),
+                                errors=errors,
+                            )
                         return await self.async_step_bind(
                             {"mac": device.device_info.mac}
                         )
@@ -50,6 +57,7 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             f"{device.device_info.name} ({device.device_info.mac})"
                         )
                         for device in devices
+                        if device.device_info is not None
                     }
                     return self.async_show_form(
                         step_id="select_device",
@@ -91,8 +99,15 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Error during discovery in binding step")
             return self.async_abort(reason="cannot_connect")
 
-        device = next((d for d in devices if d.device_info.mac == mac), None)
-        if device is None:
+        device = next(
+            (
+                d
+                for d in devices
+                if d.device_info is not None and d.device_info.mac == mac
+            ),
+            None,
+        )
+        if device is None or device.device_info is None:
             return self.async_abort(reason="device_not_found")
 
         try:
