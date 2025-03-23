@@ -312,8 +312,8 @@ class TestGreeVersatiWaterHeater:
         # Setup hass.data with the correct structure
         hass.data = {
             "gree_versati": {
-                "test_entry_id": {"coordinator": coordinator, "client": client}
-            }
+                "test_entry_id": {"coordinator": coordinator, "client": client},
+            },
         }
 
         # Create a class-like object with coordinator and client attributes

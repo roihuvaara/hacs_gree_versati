@@ -9,6 +9,8 @@
   "documentation": "https://github.com/roihuvaara/hacs_gree_versati",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/roihuvaara/hacs_gree_versati/issues",
-  "requirements": ["greeclimate_versati_fork@git+https://github.com/roihuvaara/greeclimate@versati-nordic-awhp"],
+  "requirements": [
+    "gree_versati @ git+https://github.com/roihuvaara/greeclimate@r1.0.1"
+  ],
   "version": "0.1.1"
 }

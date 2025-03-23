@@ -1,31 +1,28 @@
-"""Test importing the greeclimate_versati_fork module."""
+"""Test importing the gree_versati module."""
 
 import unittest
 
 
 class TestImports(unittest.TestCase):
-    """Test importing required modules."""
+    """Test importing the gree_versati module."""
 
-    def test_greeclimate_versati_fork(self):
-        """Test importing the greeclimate_versati_fork module."""
-        import greeclimate_versati_fork
+    def test_gree_versati(self):
+        """Test importing the gree_versati module."""
+        import gree_versati
 
-        self.assertIsNotNone(greeclimate_versati_fork)
+        self.assertIsNotNone(gree_versati)
+        print(f"Found gree_versati at: {gree_versati.__file__}")
 
-        # Get module location
-        print(f"Found greeclimate_versati_fork at: {greeclimate_versati_fork.__file__}")
-
-    def test_awhp_device(self):
-        """Test importing the AwhpDevice and AwhpProps classes."""
-        from greeclimate_versati_fork.awhp_device import AwhpDevice, AwhpProps
+        # Test importing specific classes
+        from gree_versati.awhp_device import AwhpDevice, AwhpProps
 
         self.assertIsNotNone(AwhpDevice)
         self.assertIsNotNone(AwhpProps)
 
-    def test_versati_fork_classes(self):
-        """Test importing other classes from greeclimate_versati_fork."""
-        from greeclimate_versati_fork.deviceinfo import DeviceInfo
-        from greeclimate_versati_fork.discovery import Discovery
+    def test_other_classes(self):
+        """Test importing other classes from gree_versati."""
+        from gree_versati.deviceinfo import DeviceInfo
+        from gree_versati.discovery import Discovery
 
         self.assertIsNotNone(DeviceInfo)
         self.assertIsNotNone(Discovery)

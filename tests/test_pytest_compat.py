@@ -1,16 +1,13 @@
 """Test pytest compatibility."""
 
+import gree_versati
 import pytest
 
 
 def test_module_import():
-    """Test that the greeclimate_versati_fork module can be imported."""
-    import greeclimate_versati_fork
-
-    assert greeclimate_versati_fork is not None
-    print(
-        f"Found greeclimate_versati_fork module at: {greeclimate_versati_fork.__file__}"
-    )
+    """Test that the gree_versati module can be imported."""
+    assert gree_versati is not None
+    print(f"Found gree_versati module at: {gree_versati.__file__}")
 
 
 @pytest.mark.asyncio

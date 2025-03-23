@@ -24,7 +24,7 @@ class TestGreeVersatiBasics(unittest.TestCase):
         """Test that the domain constant is defined correctly."""
         self.assertEqual(DOMAIN, "gree_versati")
 
-    @patch("greeclimate_versati_fork.awhp_device.AwhpDevice")
+    @patch("gree_versati.awhp_device.AwhpDevice")
     def test_client_initialization(self, mock_device):
         """Test that the client can be initialized."""
         # Configure the mock
@@ -50,13 +50,13 @@ class TestGreeVersatiBasics(unittest.TestCase):
 
     def test_import_dependencies(self):
         """Test that all required dependencies can be imported."""
-        # Test importing greeclimate_versati_fork
-        import greeclimate_versati_fork
+        # Test importing gree_versati
+        import gree_versati
 
-        self.assertIsNotNone(greeclimate_versati_fork)
+        self.assertIsNotNone(gree_versati)
 
         # Test importing specific classes
-        from greeclimate_versati_fork.awhp_device import AwhpDevice, AwhpProps
+        from gree_versati.awhp_device import AwhpDevice, AwhpProps
 
         self.assertIsNotNone(AwhpDevice)
         self.assertIsNotNone(AwhpProps)

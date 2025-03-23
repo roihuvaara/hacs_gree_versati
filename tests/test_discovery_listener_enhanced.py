@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
+from gree_versati.deviceinfo import DeviceInfo
 
 from custom_components.gree_versati.discovery_listener import DiscoveryListener
 
@@ -66,7 +66,9 @@ class TestEnhancedDiscoveryListener:
 
     @pytest.mark.asyncio
     async def test_enhanced_listener_multiple_devices(
-        self, mock_device_info, mock_device_info_2
+        self,
+        mock_device_info,
+        mock_device_info_2,
     ):
         """Test an enhanced listener that can handle multiple devices."""
         # Create a mock for AwhpDevice
@@ -159,7 +161,9 @@ class TestEnhancedDiscoveryListener:
 
     @pytest.mark.asyncio
     async def test_enhanced_listener_binding_failure(
-        self, mock_device_info, mock_device_info_2
+        self,
+        mock_device_info,
+        mock_device_info_2,
     ):
         """Test an enhanced listener when binding fails for one device."""
         # Create a mock for AwhpDevice

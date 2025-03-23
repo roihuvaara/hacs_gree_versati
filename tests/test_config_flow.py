@@ -3,8 +3,8 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from greeclimate_versati_fork.awhp_device import AwhpDevice
-from greeclimate_versati_fork.deviceinfo import DeviceInfo
+from gree_versati.awhp_device import AwhpDevice
+from gree_versati.deviceinfo import DeviceInfo
 from homeassistant import config_entries
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
 
