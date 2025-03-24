@@ -38,6 +38,7 @@ class GreeVersatiWaterHeater(WaterHeaterEntity):
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_operation_list = OPERATION_LIST
+    _attr_has_entity_name = True
     _attr_supported_features = (
         WaterHeaterEntityFeature.TARGET_TEMPERATURE
         | WaterHeaterEntityFeature.OPERATION_MODE
@@ -51,8 +52,7 @@ class GreeVersatiWaterHeater(WaterHeaterEntity):
         """Initialize the water heater device."""
         self.coordinator = coordinator
         self._client = client
-        # Simplified unique ID
-        self._attr_unique_id = f"gree_versati_{client.mac}"
+        self._attr_unique_id = "water_heater"
 
     @cached_property
     def available(self) -> bool:

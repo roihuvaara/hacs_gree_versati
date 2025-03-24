@@ -53,10 +53,12 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
     @cached_property
     def device_info(self) -> DeviceInfo | None:
         """Return device information."""
+        device_name = self.coordinator.config_entry.title or "Unknown"
+
         if not self.coordinator.data:
             return DeviceInfo(
                 identifiers={(DOMAIN, self._client.mac)},
-                name=self.coordinator.config_entry.title or "Unknown",
+                name=device_name,
                 manufacturer="Gree",
                 model="Versati",
             )
@@ -66,7 +68,7 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
 
         return DeviceInfo(
             identifiers={(DOMAIN, self._client.mac)},
-            name=self.coordinator.config_entry.title or "Unknown",
+            name=device_name,
             manufacturer="Gree",
             model=model_name,
         )

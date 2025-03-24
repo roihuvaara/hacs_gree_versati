@@ -32,13 +32,15 @@ class TestGreeVersatiClimate:
         assert climate._attr_temperature_unit == UnitOfTemperature.CELSIUS
         assert climate._attr_target_temperature_step == 1
         assert climate._attr_hvac_modes == [HVACMode.OFF, HVACMode.HEAT, HVACMode.COOL]
+        assert climate._attr_has_entity_name is True
+        assert not hasattr(climate, "_attr_name") or climate._attr_name is None
         assert climate._attr_supported_features == (
             ClimateEntityFeature.TARGET_TEMPERATURE
             | ClimateEntityFeature.TURN_OFF
             | ClimateEntityFeature.TURN_ON
         )
         assert climate._client == client
-        assert climate._attr_unique_id == "gree_versati_AA:BB:CC:DD:EE:FF"
+        assert climate._attr_unique_id == "space_heating"
 
     def test_translation_key(self):
         """Test translation_key property."""

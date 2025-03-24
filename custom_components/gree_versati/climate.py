@@ -38,6 +38,7 @@ class GreeVersatiClimate(ClimateEntity):
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
+    _attr_has_entity_name = True
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_OFF
@@ -52,7 +53,7 @@ class GreeVersatiClimate(ClimateEntity):
         """Initialize the climate device."""
         self.coordinator = coordinator
         self._client = client
-        self._attr_unique_id = f"gree_versati_{client.mac}"
+        self._attr_unique_id = "space_heating"
         self._attr_hvac_modes = [
             HVACMode.OFF,
             HVACMode.HEAT,

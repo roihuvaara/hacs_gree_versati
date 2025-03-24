@@ -32,12 +32,16 @@ class TestGreeVersatiWaterHeater:
         # Verify the water heater entity was initialized correctly
         assert water_heater._attr_temperature_unit == UnitOfTemperature.CELSIUS
         assert water_heater._attr_operation_list == OPERATION_LIST
+        assert water_heater._attr_has_entity_name is True
+        assert (
+            not hasattr(water_heater, "_attr_name") or water_heater._attr_name is None
+        )
         assert water_heater._attr_supported_features == (
             WaterHeaterEntityFeature.TARGET_TEMPERATURE
             | WaterHeaterEntityFeature.OPERATION_MODE
         )
         assert water_heater._client == client
-        assert water_heater._attr_unique_id == "gree_versati_AA:BB:CC:DD:EE:FF"
+        assert water_heater._attr_unique_id == "water_heater"
 
     def test_translation_key(self):
         """Test translation_key property."""
