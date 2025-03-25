@@ -112,14 +112,17 @@ async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
             return_value=mock_device,
         ),
         patch("custom_components.gree_versati.client.DeviceInfo"),
+        patch.object(hass, "async_add_executor_job", new_callable=AsyncMock),
     ):
         # Import the setup_entry function
         from custom_components.gree_versati import async_setup_entry
 
-        # Create a mock entry
-        entry = MagicMock()
-        entry.data = entry_data
-        entry.entry_id = "test"
+        # Create a proper ConfigEntry mock
+        entry = MockConfigEntry(
+            domain="gree_versati",
+            data=entry_data,
+            entry_id="test",
+        )
 
         # Call the setup entry function directly
         result = await async_setup_entry(hass, entry)

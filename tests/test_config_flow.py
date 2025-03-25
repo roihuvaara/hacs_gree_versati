@@ -14,13 +14,6 @@ from custom_components.gree_versati.const import CONF_IP, DOMAIN
 @pytest.mark.asyncio
 async def test_form(hass):
     """Test we get the form."""
-    # First step - user form
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": config_entries.SOURCE_USER}
-    )
-    assert result["type"] == "form"
-    assert result["errors"] == {}
-
     # Create a mock device for discovery
     mock_device_info = MagicMock(spec=DeviceInfo)
     mock_device_info.ip = "192.168.1.123"
@@ -33,10 +26,20 @@ async def test_form(hass):
     mock_device.bind = AsyncMock(return_value="test_key")
 
     # Mock the discovery and setup
-    with patch(
-        "custom_components.gree_versati.client.GreeVersatiClient.run_discovery",
-        return_value=[mock_device],
+    with (
+        patch(
+            "custom_components.gree_versati.client.GreeVersatiClient.run_discovery",
+            return_value=[mock_device],
+        ),
+        patch.object(hass, "async_add_executor_job", new_callable=AsyncMock),
     ):
+        # First step - user form
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+        assert result["type"] == "form"
+        assert result["errors"] == {}
+
         # Submit the user form (this should lead to the bind step)
         bind_result = await hass.config_entries.flow.async_configure(
             result["flow_id"],

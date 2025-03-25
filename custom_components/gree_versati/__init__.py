@@ -18,6 +18,7 @@ from .client import GreeVersatiClient
 from .const import CONF_IP, DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .data import GreeVersatiData
+from .package_helper import force_update_dependency
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -56,6 +57,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
       - "key": the negotiated binding key
     """
     LOGGER.debug("Starting setup of Gree Versati integration")
+
+    # Force update/reinstall dependency from manifest.json
+    await force_update_dependency(hass)
 
     ip = entry.data[CONF_IP]
     port = entry.data[CONF_PORT]

@@ -3,4 +3,4 @@ homeassistant==2024.11.0
 pip>=21.3.1
 ruff==0.11.2
 pyright
-gree_versati @ git+https://github.com/roihuvaara/greeclimate@r1.0.2
+gree_versati @ git+https://github.com/roihuvaara/greeclimate@r1.0.5
