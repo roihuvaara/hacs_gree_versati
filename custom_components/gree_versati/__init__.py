@@ -93,11 +93,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         logger=LOGGER,
         update_interval=timedelta(seconds=30),
     )
+    LOGGER.debug(
+        "Coordinator created with update interval: %s", coordinator.update_interval
+    )
 
     # Link everything together
     data.coordinator = coordinator
     coordinator.config_entry = entry
     coordinator.config_entry.runtime_data = data
+    LOGGER.debug("Coordinator linked to config entry and runtime data")
 
     try:
         LOGGER.debug("Performing initial data refresh")
