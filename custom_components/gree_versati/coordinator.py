@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -40,12 +39,6 @@ class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             LOGGER.debug("Fetching updated data from device")
             data = await self.config_entry.runtime_data.client.async_get_data()
-            # Only add delay during the first data fetch
-            if not hasattr(self, "_first_update_done") or not self._first_update_done:
-                LOGGER.debug("First update - adding delay to allow device to respond")
-                await asyncio.sleep(2.0)
-                self._first_update_done = True
-
             LOGGER.debug("Updated data received: %s", data)
             return data
         except Exception as exc:
