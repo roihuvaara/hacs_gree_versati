@@ -13,3 +13,6 @@ CONF_IP = "ip"
 # HVAC mode constants
 HEAT_MODE = 4
 COOL_MODE = 1
+
+# Water heater operation modes
+OPERATION_LIST = ["normal", "performance"]
