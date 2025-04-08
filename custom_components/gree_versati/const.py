@@ -1,18 +1,34 @@
-"""Constants for gree_versati."""
+"""Constants for the Gree Versati integration."""
 
-from logging import Logger, getLogger
+from __future__ import annotations
 
-LOGGER: Logger = getLogger(__package__)
-LOGGER.setLevel("DEBUG")
+import logging
+from typing import Final
 
-DOMAIN = "gree_versati"
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
+LOGGER: Final = logging.getLogger(__name__)
+ATTRIBUTION: Final = "Data provided by jsonplaceholder.typicode.com"
+DOMAIN: Final = "gree_versati"
 
-CONF_IP = "ip"
+# Configuration
+CONF_IP: Final = "ip"
+CONF_HOST: Final = "host"
+CONF_PORT: Final = "port"
+CONF_MAC: Final = "mac"
+CONF_DEVICE_NAME: Final = "device_name"
+CONF_BIND_KEY: Final = "bind_key"
 
-# HVAC mode constants
-HEAT_MODE = 4
-COOL_MODE = 1
+# Platforms
+PLATFORMS: Final = ["climate", "select"]
+
+# Operating modes
+HEAT_MODE: Final = "heat"
+COOL_MODE: Final = "cool"
+HEAT_DHW_MODE: Final = "heat_dhw"
+COOL_DHW_MODE: Final = "cool_dhw"
 
 # Water heater operation modes
 OPERATION_LIST = ["normal", "performance"]
+
+# Configuration options
+CONF_EXTERNAL_TEMP_SENSOR = "external_temp_sensor"
+CONF_USE_WATER_TEMP_AS_CURRENT = "use_water_temp_as_current"

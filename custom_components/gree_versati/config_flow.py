@@ -7,11 +7,57 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
+from homeassistant.helpers import selector
 
 from .client import GreeVersatiClient
-from .const import CONF_IP, DOMAIN
+from .const import (
+    CONF_EXTERNAL_TEMP_SENSOR,
+    CONF_IP,
+    CONF_USE_WATER_TEMP_AS_CURRENT,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class GreeVersatiOptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle Gree Versati options."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
+        """Manage the options."""
+        errors: dict[str, str] = {}
+        options = self.config_entry.options.copy()
+
+        if user_input is not None:
+            # Update options
+            options.update(user_input)
+            return self.async_create_entry(title="", data=options)
+
+        # Prepare form with current or default values
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_EXTERNAL_TEMP_SENSOR,
+                        default=options.get(CONF_EXTERNAL_TEMP_SENSOR, ""),
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(
+                            domain=["sensor", "number", "input_number"]
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_USE_WATER_TEMP_AS_CURRENT,
+                        default=options.get(CONF_USE_WATER_TEMP_AS_CURRENT, False),
+                    ): bool,
+                }
+            ),
+            errors=errors,
+        )
 
 
 class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -19,6 +65,13 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
+
+    @staticmethod
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> GreeVersatiOptionsFlowHandler:
+        """Get the options flow for this handler."""
+        return GreeVersatiOptionsFlowHandler(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -116,16 +169,25 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Error during binding with device %s", mac)
             return self.async_abort(reason="bind_failed")
 
+        # Set a consistent unique ID for the device
         await self.async_set_unique_id(mac)
         self._abort_if_unique_id_configured()
 
+        # Use a default title if device name is not available
+        device_name = device.device_info.name
+        if not device_name or device_name == mac:
+            device_name = f"Gree Versati ({mac})"
+        else:
+            # If we have a device name but it's not informative, add the MAC
+            device_name = f"{device_name} ({mac})"
+
         return self.async_create_entry(
-            title="Gree Versati",
+            title=device_name,
             data={
                 CONF_IP: device.device_info.ip,
                 CONF_PORT: device.device_info.port,
                 CONF_MAC: device.device_info.mac,
-                CONF_NAME: device.device_info.name,
+                CONF_NAME: device_name,
                 "key": key,
             },
         )

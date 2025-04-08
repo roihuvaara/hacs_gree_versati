@@ -4,7 +4,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -15,7 +15,15 @@ sys.path.insert(0, str(repo_root))
 # Import constants from the component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gree_versati.const import DOMAIN
+from custom_components.gree_versati.const import CONF_IP, DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
+
+from custom_components.gree_versati.client import GreeVersatiClient
+
+# Import MockAwhpDevice with absolute import
+from tests.mock_awhp_device import MockAwhpDevice
 
 # Configure logging to filter out asyncio debug messages
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -45,10 +53,10 @@ def mock_config_entry():
     return MockConfigEntry(
         domain=DOMAIN,
         data={
-            "ip": "192.168.1.100",
-            "port": 7000,
-            "name": "Test Gree Versati",
-            "mac": "AA:BB:CC:DD:EE:FF",
+            CONF_IP: "192.168.1.100",
+            CONF_PORT: 7000,
+            CONF_NAME: "Test Gree Versati",
+            CONF_MAC: "AA:BB:CC:DD:EE:FF",
             "key": "test_key",
         },
         entry_id="test",
@@ -382,3 +390,127 @@ def hass(event_loop):
     hass_mock.async_block_till_done = AsyncMock(side_effect=async_block_till_done)
 
     return hass_mock
+
+
+@pytest.fixture
+def mock_awhp_device():
+    """Create a mock AwhpDevice for testing."""
+    device = MockAwhpDevice(
+        device_id="AA:BB:CC:DD:EE:FF", device_name="Test Gree Versati"
+    )
+    return device
+
+
+@pytest.fixture
+def mock_client(mock_awhp_device):
+    """Create a mock client with the mock device."""
+    client = GreeVersatiClient(
+        ip="192.168.1.100", port=7000, mac="AA:BB:CC:DD:EE:FF", key="test_key"
+    )
+    # Replace the client's device with our mock device
+    client.device = mock_awhp_device
+
+    # Create AsyncMock for client methods
+    client.set_temperature = AsyncMock()
+    client.set_hvac_mode = AsyncMock()
+    client.set_dhw_temperature = AsyncMock()
+    client.set_dhw_mode = AsyncMock()
+
+    # Map the common methods to use the mock device
+    async def mock_set_temperature(temp, mode=None):
+        if mode == "heat":
+            mock_awhp_device.heat_temp_set = int(temp)
+        elif mode == "cool":
+            mock_awhp_device.cool_temp_set = int(temp)
+        await mock_awhp_device.push_state_update()
+
+    async def mock_set_hvac_mode(mode):
+        if mode == "heat":
+            mock_awhp_device.mode = 4  # HEAT_MODE
+            mock_awhp_device.power = True
+            mock_awhp_device.heat_and_hot_water = False
+        elif mode == "cool":
+            mock_awhp_device.mode = 1  # COOL_MODE
+            mock_awhp_device.power = True
+            mock_awhp_device.cool_and_hot_water = False
+        elif mode == "heat_dhw":
+            mock_awhp_device.mode = 4  # HEAT_MODE
+            mock_awhp_device.power = True
+            mock_awhp_device.heat_and_hot_water = True
+        elif mode == "cool_dhw":
+            mock_awhp_device.mode = 1  # COOL_MODE
+            mock_awhp_device.power = True
+            mock_awhp_device.cool_and_hot_water = True
+        elif mode == "off":
+            mock_awhp_device.power = False
+        await mock_awhp_device.push_state_update()
+
+    async def mock_set_dhw_temperature(temp):
+        mock_awhp_device.hot_water_temp_set = int(temp)
+        await mock_awhp_device.push_state_update()
+
+    async def mock_set_dhw_mode(mode):
+        mock_awhp_device.fast_heat_water = mode == "performance"
+        await mock_awhp_device.push_state_update()
+
+    async def mock_get_data():
+        # Simulate a state update to get the latest data
+        return {
+            "water_out_temp": mock_awhp_device.t_water_out_pe(),
+            "water_in_temp": mock_awhp_device.t_water_in_pe(),
+            "hot_water_temp": mock_awhp_device.hot_water_temp(),
+            "opt_water_temp": mock_awhp_device.t_opt_water(),
+            "heat_temp_set": mock_awhp_device.heat_temp_set,
+            "cool_temp_set": mock_awhp_device.cool_temp_set,
+            "hot_water_temp_set": mock_awhp_device.hot_water_temp_set,
+            "power": mock_awhp_device.power,
+            "mode": mock_awhp_device.mode,
+            "fast_heat_water": mock_awhp_device.fast_heat_water,
+            "heat_and_hot_water": mock_awhp_device.heat_and_hot_water,
+            "cool_and_hot_water": mock_awhp_device.cool_and_hot_water,
+            "tank_heater_status": mock_awhp_device.tank_heater_status,
+            "defrosting_status": mock_awhp_device.system_defrosting_status,
+            "hp_heater_1_status": mock_awhp_device.hp_heater_1_status,
+            "hp_heater_2_status": mock_awhp_device.hp_heater_2_status,
+            "frost_protection": mock_awhp_device.automatic_frost_protection,
+            "versati_series": mock_awhp_device.versati_series,
+        }
+
+    # Assign the mocked methods
+    client.set_temperature.side_effect = mock_set_temperature
+    client.set_hvac_mode.side_effect = mock_set_hvac_mode
+    client.set_dhw_temperature.side_effect = mock_set_dhw_temperature
+    client.set_dhw_mode.side_effect = mock_set_dhw_mode
+    client.async_get_data = AsyncMock(side_effect=mock_get_data)
+
+    return client
+
+
+# @pytest.fixture
+# def mock_config_entry():
+#     """Create a mock config entry for testing."""
+#     return ConfigEntry(
+#         domain=DOMAIN,
+#         data={
+#             CONF_IP: "192.168.1.100",
+#             CONF_PORT: 7000,
+#             CONF_MAC: "AA:BB:CC:DD:EE:FF",
+#             CONF_NAME: "Test Gree Versati",
+#             "key": "test_key",
+#         },
+#         source="user",
+#         title="Test Gree Versati",
+#         options={},
+#         entry_id="test",
+#         state=None,
+#         pref_disable_new_entities=False,
+#         pref_disable_polling=False,
+#         unique_id="AA:BB:CC:DD:EE:FF",
+#         disabled_by=None,
+#         reason=None,
+#         version=None,
+#     )
+
+
+# @pytest.fixture
+# def hass(tmp_path):

@@ -9,12 +9,13 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import GreeVersatiDataUpdateCoordinator
 
@@ -28,7 +29,9 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Gree Versati water heater platform."""
     data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([GreeVersatiWaterHeater(data.coordinator, data.client)])
+    async_add_entities(
+        [GreeVersatiWaterHeater(hass, entry, data.coordinator, data.client)]
+    )
 
 
 class GreeVersatiWaterHeater(CoordinatorEntity, WaterHeaterEntity):
@@ -44,13 +47,21 @@ class GreeVersatiWaterHeater(CoordinatorEntity, WaterHeaterEntity):
 
     def __init__(
         self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
         coordinator: GreeVersatiDataUpdateCoordinator,
         client: Any,
     ) -> None:
         """Initialize the water heater device."""
         super().__init__(coordinator)
+        self.hass = hass
+        self.entry = entry
         self._client = client
-        self._attr_unique_id = "water_heater"
+        # Use MAC address for unique_id to ensure consistency
+        self._attr_unique_id = f"{client.mac}_water_heater"
+        self._attr_name = "Water Heater"
+        # Set a consistent device identifier
+        self._device_id = client.mac or "unknown"
 
     @property
     def available(self) -> bool:
@@ -61,6 +72,27 @@ class GreeVersatiWaterHeater(CoordinatorEntity, WaterHeaterEntity):
     def translation_key(self) -> str | None:
         """Return the translation key to translate the entity's name."""
         return "water_heater"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        # Use the entry title or a meaningful default
+        device_name = self.entry.title or "Gree Versati"
+
+        # Use MAC address as the consistent device identifier
+        mac_address = self._client.mac or "unknown"
+
+        device_info = DeviceInfo(
+            identifiers={(DOMAIN, mac_address)},
+            name=device_name,
+            manufacturer="Gree",
+            model="Versati",
+            sw_version=self.coordinator.data.get("versati_series", "Unknown")
+            if self.coordinator.data
+            else "Unknown",
+        )
+
+        return device_info
 
     @property
     def current_temperature(self) -> float | None:

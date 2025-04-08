@@ -5,12 +5,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from homeassistant.components.water_heater import WaterHeaterEntityFeature
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
 
 from custom_components.gree_versati.water_heater import (
     OPERATION_LIST,
     GreeVersatiWaterHeater,
     async_setup_entry,
 )
+from custom_components.gree_versati.const import DOMAIN
 
 
 class TestGreeVersatiWaterHeater:
@@ -18,7 +20,10 @@ class TestGreeVersatiWaterHeater:
 
     def test_water_heater_initialization(self):
         """Test water heater initialization."""
-        # Create a mock coordinator
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
 
@@ -27,7 +32,7 @@ class TestGreeVersatiWaterHeater:
         client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify the water heater entity was initialized correctly
         assert water_heater._attr_temperature_unit == UnitOfTemperature.CELSIUS
@@ -41,78 +46,102 @@ class TestGreeVersatiWaterHeater:
             | WaterHeaterEntityFeature.OPERATION_MODE
         )
         assert water_heater._client == client
-        assert water_heater._attr_unique_id == "water_heater"
+        assert water_heater._attr_unique_id == "AA:BB:CC:DD:EE:FF_water_heater"
 
     def test_translation_key(self):
         """Test translation_key property."""
-        # Create a mock coordinator
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify translation key
         assert water_heater.translation_key == "water_heater"
 
     def test_current_temperature(self):
         """Test current_temperature property."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"hot_water_temp": 50.0}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify current temperature
         assert water_heater.current_temperature == 50.0
 
     def test_target_temperature(self):
         """Test target_temperature property."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"hot_water_temp_set": 55.0}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify target temperature
         assert water_heater.target_temperature == 55.0
 
     def test_current_operation_normal(self):
         """Test current_operation property in normal mode."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"fast_heat_water": False}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify current operation
         assert water_heater.current_operation == "normal"
 
     def test_current_operation_performance(self):
         """Test current_operation property in performance mode."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"fast_heat_water": True}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify current operation
         assert water_heater.current_operation == "performance"
@@ -120,16 +149,21 @@ class TestGreeVersatiWaterHeater:
     @pytest.mark.asyncio
     async def test_async_set_temperature(self):
         """Test async_set_temperature method."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
         coordinator.async_request_refresh = AsyncMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
         client.set_dhw_temperature = AsyncMock()
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Call set_temperature
         await water_heater.async_set_temperature(**{ATTR_TEMPERATURE: 60.0})
@@ -143,15 +177,20 @@ class TestGreeVersatiWaterHeater:
     @pytest.mark.asyncio
     async def test_async_set_temperature_no_temp(self):
         """Test async_set_temperature method with no temperature."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
         client.set_dhw_temperature = AsyncMock()
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Call set_temperature with no temperature
         await water_heater.async_set_temperature()
@@ -162,16 +201,21 @@ class TestGreeVersatiWaterHeater:
     @pytest.mark.asyncio
     async def test_async_set_operation_mode(self):
         """Test async_set_operation_mode method."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
         coordinator.async_request_refresh = AsyncMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
         client.set_dhw_mode = AsyncMock()
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Call set_operation_mode
         await water_heater.async_set_operation_mode("performance")
@@ -184,30 +228,40 @@ class TestGreeVersatiWaterHeater:
 
     def test_hvac_mode_on(self):
         """Test hvac_mode property when target temperature is set."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"hot_water_temp_set": 55.0}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify HVAC mode
         assert water_heater.hvac_mode == "on"
 
     def test_hvac_mode_off(self):
         """Test hvac_mode property when target temperature is not set."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator with data
         coordinator = MagicMock()
         coordinator.data = {"hot_water_temp_set": None}
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify HVAC mode
         assert water_heater.hvac_mode == "off"
@@ -215,18 +269,22 @@ class TestGreeVersatiWaterHeater:
     @pytest.mark.asyncio
     async def test_async_set_hvac_mode_on(self):
         """Test async_set_hvac_mode method with 'on' mode."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
-        # Create the water heater entity
         with patch(
             "custom_components.gree_versati.water_heater.GreeVersatiWaterHeater.target_temperature",
             new_callable=MagicMock(return_value=None),
         ):
-            water_heater = GreeVersatiWaterHeater(coordinator, client)
+            water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
             water_heater.async_set_temperature = AsyncMock()
 
             # Call set_hvac_mode with 'on'
@@ -238,18 +296,22 @@ class TestGreeVersatiWaterHeater:
     @pytest.mark.asyncio
     async def test_async_set_hvac_mode_off(self):
         """Test async_set_hvac_mode method with 'off' mode."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
-        # Create the water heater entity
         with patch(
             "custom_components.gree_versati.water_heater.GreeVersatiWaterHeater.target_temperature",
             new_callable=MagicMock(return_value=55.0),
         ):
-            water_heater = GreeVersatiWaterHeater(coordinator, client)
+            water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
             water_heater.async_set_temperature = AsyncMock()
 
             # Call set_hvac_mode with 'off'
@@ -260,42 +322,57 @@ class TestGreeVersatiWaterHeater:
 
     def test_hvac_modes(self):
         """Test hvac_modes property."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify HVAC modes
         assert water_heater.hvac_modes == ["on", "off"]
 
     def test_min_temp(self):
         """Test min_temp property."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify min temperature
         assert water_heater.min_temp == 30.0
 
     def test_max_temp(self):
         """Test max_temp property."""
+        # Create mock objects
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
         # Create a mock coordinator
         coordinator = MagicMock()
 
         # Create a mock client
         client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
 
         # Verify max temperature
         assert water_heater.max_temp == 80.0
@@ -341,3 +418,70 @@ class TestGreeVersatiWaterHeater:
 
             # Verify the entity is a GreeVersatiWaterHeater
             assert isinstance(entities[0], GreeVersatiWaterHeater)
+
+    def test_device_info_consistent(self):
+        """Test that device_info is consistent for grouping."""
+        # Create mocks
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
+        coordinator = MagicMock()
+        coordinator.data = {"versati_series": "III"}
+        client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
+
+        # Create the water heater entity
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
+
+        # Just check that device_info is created and not None
+        assert water_heater.device_info is not None
+
+    @pytest.mark.asyncio
+    @patch(
+        "custom_components.gree_versati.client.GreeVersatiClient.set_dhw_temperature"
+    )
+    async def test_set_temperature(self, mock_set_dhw_temperature):
+        """Test setting the temperature."""
+        # Create mocks
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
+        coordinator = MagicMock()
+        coordinator.async_request_refresh = AsyncMock()
+        client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
+        client.set_dhw_temperature = AsyncMock()
+
+        # Create the water heater entity
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
+
+        # Set temperature
+        await water_heater.async_set_temperature(**{ATTR_TEMPERATURE: 55})
+
+        # Verify call
+        client.set_dhw_temperature.assert_called_once_with(55)
+        coordinator.async_request_refresh.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("custom_components.gree_versati.client.GreeVersatiClient.set_dhw_mode")
+    async def test_set_operation_mode(self, mock_set_dhw_mode):
+        """Test setting the operation mode."""
+        # Create mocks
+        hass = MagicMock(spec=HomeAssistant)
+        entry = MagicMock()
+        entry.title = "Test Device"
+        coordinator = MagicMock()
+        coordinator.async_request_refresh = AsyncMock()
+        client = MagicMock()
+        client.mac = "AA:BB:CC:DD:EE:FF"
+        client.set_dhw_mode = AsyncMock()
+
+        # Create the water heater entity
+        water_heater = GreeVersatiWaterHeater(hass, entry, coordinator, client)
+
+        # Set operation mode
+        await water_heater.async_set_operation_mode("performance")
+
+        # Verify call
+        client.set_dhw_mode.assert_called_once_with("performance")
+        coordinator.async_request_refresh.assert_called_once()

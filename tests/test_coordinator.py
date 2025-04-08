@@ -161,3 +161,51 @@ async def test_coordinator_entity_update(hass: HomeAssistant):
         assert listener.call_count >= 1, (
             "Listener should not be called after unsubscribing"
         )
+
+
+@pytest.mark.asyncio
+async def test_coordinator_automatic_polling(hass: HomeAssistant):
+    """Test that the coordinator can perform scheduled updates."""
+    # Create a mock client with an async_get_data method
+    client = MagicMock()
+    client.async_get_data = AsyncMock(
+        return_value={"water_out_temp": 35.0, "power": True}
+    )
+
+    # Create a mock config entry with proper state
+    config_entry = MagicMock()
+    config_entry.state = ConfigEntryState.SETUP_IN_PROGRESS
+    config_entry.runtime_data = MagicMock()
+    config_entry.runtime_data.client = client
+
+    # Mock the asyncio.sleep function to prevent actual sleeping
+    with patch("asyncio.sleep", new=AsyncMock()):
+        # Create the coordinator with a very short update interval
+        coordinator = GreeVersatiDataUpdateCoordinator(
+            hass=hass,
+            name=DOMAIN,
+            logger=LOGGER,
+            update_interval=timedelta(seconds=0.1),
+        )
+        coordinator.config_entry = config_entry
+
+        # Initialize the coordinator with the first refresh
+        await coordinator.async_config_entry_first_refresh()
+
+        # Reset the mock to clear the initial call
+        client.async_get_data.reset_mock()
+
+        # Mock the _async_update_data method directly to avoid calling the real implementation
+        # during the _async_refresh call
+        with patch.object(
+            coordinator, "_async_update_data", new=AsyncMock()
+        ) as mock_update_data:
+            # Manually trigger a scheduled update
+            await coordinator._async_refresh(scheduled=True)
+
+            # Verify our mocked method was called
+            mock_update_data.assert_called_once()
+
+        # Verify the client's async_get_data was used in a normal update
+        await coordinator.async_refresh()
+        assert client.async_get_data.called, "client.async_get_data was not called"

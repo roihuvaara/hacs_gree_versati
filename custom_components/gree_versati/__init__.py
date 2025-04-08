@@ -31,6 +31,7 @@ PLATFORMS: list[Platform] = [
     # Platform.SWITCH,
     Platform.CLIMATE,
     Platform.WATER_HEATER,
+    Platform.SELECT,
 ]
 
 
@@ -67,8 +68,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     name = entry.data[CONF_NAME]
     key = entry.data["key"]
 
+    # Ensure the entry has a unique ID based on the MAC address
+    if entry.unique_id is None:
+        hass.config_entries.async_update_entry(entry, unique_id=mac)
+
     # Create the client using the stored connection parameters and key.
-    client = GreeVersatiClient(ip=ip, port=port, mac=mac, key=key)
+    client = GreeVersatiClient(ip=ip, port=port, mac=mac, key=key, name=name)
 
     try:
         LOGGER.debug("Initializing device connection")
@@ -102,6 +107,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator.config_entry = entry
     coordinator.config_entry.runtime_data = data
     LOGGER.debug("Coordinator linked to config entry and runtime data")
+
+    # Register the device in the device registry
+    from homeassistant.helpers import device_registry as dr
+
+    device_registry = dr.async_get(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, mac)},
+        name=name or "Gree Versati",
+        manufacturer="Gree",
+        model="Versati",
+    )
+    LOGGER.debug("Device registered in device registry")
 
     try:
         LOGGER.debug("Performing initial data refresh")

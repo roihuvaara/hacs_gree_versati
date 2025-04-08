@@ -9,7 +9,7 @@ from gree_versati.awhp_device import AwhpDevice, AwhpProps
 from gree_versati.deviceinfo import DeviceInfo
 from gree_versati.discovery import Discovery
 
-from .const import COOL_MODE, HEAT_MODE, LOGGER
+from .const import COOL_DHW_MODE, COOL_MODE, HEAT_DHW_MODE, HEAT_MODE, LOGGER
 from .discovery_listener import DiscoveryListener
 
 # Define constants for HVAC mode values are now in const.py
@@ -40,6 +40,7 @@ class GreeVersatiClient:
         port: int | None = None,
         mac: str | None = None,
         key: str | None = None,
+        name: str | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         """
@@ -50,6 +51,7 @@ class GreeVersatiClient:
             port: The port number of the device
             mac: The MAC address of the device
             key: The encryption key for the device
+            name: The name of the device
             loop: The event loop to use
 
         """
@@ -58,6 +60,7 @@ class GreeVersatiClient:
         self.port = port
         self.mac = mac
         self.key = key
+        self.name = name
         self.device: AwhpDevice | None = None
         self._data: dict[str, Any] = {}  # Add cache for device data
 
@@ -99,6 +102,9 @@ class GreeVersatiClient:
                 "power": raw_data.get(AwhpProps.POWER.value),
                 "mode": raw_data.get(AwhpProps.MODE.value),
                 "fast_heat_water": raw_data.get(AwhpProps.FAST_HEAT_WATER.value),
+                # Combined mode flags
+                "heat_and_hot_water": raw_data.get(AwhpProps.HEAT_AND_HOT_WATER.value),
+                "cool_and_hot_water": raw_data.get(AwhpProps.COOL_AND_HOT_WATER.value),
                 # Status indicators
                 "tank_heater_status": raw_data.get(AwhpProps.TANK_HEATER_STATUS.value),
                 "defrosting_status": raw_data.get(
@@ -139,7 +145,9 @@ class GreeVersatiClient:
                 self.mac,
             )
             # Create the device info from stored parameters.
-            device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
+            # Use the provided name or fallback to MAC
+            device_name = self.name if self.name else self.mac
+            device_info = DeviceInfo(self.ip, self.port, self.mac, name=device_name)
             self.device = AwhpDevice(device_info)
 
             try:
@@ -202,10 +210,16 @@ class GreeVersatiClient:
     def hvac_mode(self) -> str:
         """Get the current HVAC mode."""
         mode = self._data.get("mode")
+        heat_dhw = bool(self._data.get("heat_and_hot_water"))
+        cool_dhw = bool(self._data.get("cool_and_hot_water"))
 
-        if mode == HEAT_MODE:  # Heat mode
+        if mode == HEAT_MODE:
+            if heat_dhw:
+                return HEAT_DHW_MODE
             return "heat"
-        if mode == COOL_MODE:  # Cool mode
+        if mode == COOL_MODE:
+            if cool_dhw:
+                return COOL_DHW_MODE
             return "cool"
         return "off"
 
@@ -228,6 +242,16 @@ class GreeVersatiClient:
     def dhw_mode(self) -> str:
         """Get the current DHW mode."""
         return "performance" if self._data.get("fast_heat_water") else "normal"
+
+    @property
+    def heat_and_hot_water(self) -> bool:
+        """Return true if heat and hot water mode is active."""
+        return bool(self._data.get("heat_and_hot_water", False))
+
+    @property
+    def cool_and_hot_water(self) -> bool:
+        """Return true if cool and hot water mode is active."""
+        return bool(self._data.get("cool_and_hot_water", False))
 
     async def set_temperature(
         self, temperature: float, mode: str | None = None
@@ -261,9 +285,19 @@ class GreeVersatiClient:
         if mode == "heat":
             self.device.set_property(AwhpProps.MODE, HEAT_MODE)
             self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.HEAT_AND_HOT_WATER, value=False)
+        elif mode == HEAT_DHW_MODE:
+            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.HEAT_AND_HOT_WATER, value=True)
         elif mode == "cool":
             self.device.set_property(AwhpProps.MODE, COOL_MODE)
             self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.COOL_AND_HOT_WATER, value=False)
+        elif mode == COOL_DHW_MODE:
+            self.device.set_property(AwhpProps.MODE, COOL_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.COOL_AND_HOT_WATER, value=True)
         elif mode == "off":
             self.device.set_property(AwhpProps.POWER, value=False)
 
