@@ -1,0 +1,90 @@
+# Gree Versati Integration - Development Guide
+
+This file provides context and instructions for developing the Gree Versati Home Assistant integration.
+
+## Methodology
+
+- **Use Test-Driven Development (TDD):** All changes, especially bug fixes, should be driven by tests. The workflow is:
+  - **Write a Failing Test First:** Create a specific test that fails precisely because of the bug you intend to fix or the feature that is missing.
+  - **Confirm the Test Fails Predictably:** Run the test and see it fail. This is the most crucial step. The test must fail in the *exact way you predicted* (e.g., `AssertionError: assert 2 == 1`). This predictable failure confirms both that the problem exists and that your test is correctly identifying it. If the test fails in an unexpected way (a different error, a different value), you must **STOP**, as it indicates your initial analysis of the problem is flawed.
+  - **Confirm permission to continue:** Once the test is written and fails as expected, ask for permission to store test status as accepted.
+  - **Update the status.md file:** Update the status.md file to reflect the status of the task.
+  - **Wait for user to commit status.md to git before implementing the code:** Once the test is written and fails as expected, ask for permission to implement the code.
+  - **Implement the code:** Implement the code to fix the bug or add the feature.
+
+## Project Overview
+A Home Assistant custom integration for Gree Versati Air to Water Heat Pumps, controlling climate and water heater functions.
+
+## Common Commands
+
+### Dependency Installation
+To install all necessary dependencies for development and testing:
+`pip install -r requirements.txt -r requirements_test.txt`
+
+### Linting
+The project uses `ruff` for linting. To run the linter:
+`ruff check .`
+
+### Testing
+Tests are run using `pytest`.
+`pytest`
+
+## Key Files
+
+- `plan.md`: A file that contains the plan for the current task.
+- `status.md`: A file that contains the status of the current task.
+
+All the below component files are located in `custom_components/gree_versati/`:
+- `__init__.py`: Handles the main integration setup, entry loading/unloading, and initialization of the coordinator and client.
+- `config_flow.py`: Manages the user-facing setup process, including device discovery and binding.
+- `client.py`: A facade that simplifies interaction with the `greeclimate_versati_fork` library, handling communication with the heat pump.
+- `coordinator.py`: The `DataUpdateCoordinator` responsible for polling the device for state updates and notifying entities.
+- `entity.py`: Provides a base class for Gree Versati entities, managing common properties like device info.
+- `climate.py`: Defines the `ClimateEntity` for controlling space heating and cooling.
+- `water_heater.py`: Defines the `WaterHeaterEntity` for controlling domestic hot water.
+- `const.py`: Contains constants used across the integration, such as domain name, logger, and operational modes.
+- `data.py`: Defines a dataclass to hold runtime instances of the client and coordinator.
+- `manifest.json`: Contains metadata for the integration, including dependencies, version, and supported platforms.
+- `package_helper.py`: A utility to force re-installation of dependencies from the manifest at startup.
+- `discovery_listener.py`: Implements a listener to handle the network discovery of Gree Versati devices.
+- `switch.py` / `sensor.py` / `binary_sensor.py`: Placeholder platforms that are not currently active in the integration.
+- `translations/en.json`: Contains all user-facing strings for internationalization (i18n).
+
+## Tests
+The integration has a comprehensive test suite in the `tests/` directory using `pytest`.
+- `conftest.py`: The central file for testing, providing fixtures that mock the Home Assistant environment, the Gree device, and client communication. This allows tests to run without a physical device.
+- **Core Component Tests**:
+    - `test_init.py`: Tests the main integration setup and unload processes defined in `__init__.py`.
+    - `test_coordinator.py`: Verifies that the `DataUpdateCoordinator` correctly fetches and manages data from the device.
+    - `test_package_helper.py`: Ensures the dependency installation helper works as expected.
+- **Client and Discovery Tests**:
+    - A series of files (`test_client_*.py`, `test_discovery_*.py`, `test_device_initialization.py`) that test low-level client communication, device discovery, binding, and data handling.
+- **Configuration Flow Tests**:
+    - `test_config_flow_*.py`: A group of files that test the user configuration flow, from discovery and device selection to binding and entry creation.
+- **Entity Tests**:
+    - `test_entity.py`: Tests the base `GreeVersatiEntity` class.
+    - `test_climate_entity.py` & `test_water_heater.py`: Contain detailed tests for the main `climate` and `water_heater` entities, ensuring they respond correctly to state changes and user interactions.
+    - `test_switch.py`, `test_binary_sensor.py`, `test_sensor.py`: Test the placeholder entities to ensure they are structurally sound.
+- **General and Utility Tests**:
+    - `test_imports.py`: Checks that all necessary modules can be imported without error.
+    - `test_basic.py` & `test_async.py`: Contain basic checks and tests for asynchronous operations.
+
+## Development Workflow & Philosophy
+To ensure high-quality contributions, please follow these guidelines, which are based on the successful iterative planning for this project.
+
+1.  **Prioritize Correctness Over Features:** Before adding new functionality (like an options flow or new services), first ensure the existing implementation is correct and provides a good user experience. For example, the issue of `climate` and `water_heater` appearing as separate devices was a bug that needed to be fixed before any enhancements were made.
+
+2.  **Use Test-Driven Development (TDD):** All changes, especially bug fixes, should be driven by tests. The workflow is:
+    -   **Write a Failing Test First:** Create a specific test that fails precisely because of the bug you intend to fix or the feature that is missing. For the device grouping issue, this would be a test that asserts the device registry only contains one device for the config entry.
+    -   **Confirm the Test Fails Predictably:** Run the test and see it fail. This is the most crucial step. The test must fail in the *exact way you predicted* (e.g., `AssertionError: assert 2 == 1`). This predictable failure confirms both that the problem exists and that your test is correctly identifying it. If the test fails in an unexpected way (a different error, a different value), you must **STOP**, as it indicates your initial analysis of the problem is flawed.
+    -   **Implement the Code:** Write the minimum amount of code required to make the failing test pass.
+    -   **Fix Consequential Failures & Refactor:** Your changes may break other, older tests. Fix these.
+    -   **Verify All Tests Pass:** Run the entire test suite to ensure the integration is healthy.
+
+3.  **Analyze Relevant Prior Art:** When looking for inspiration or best practices, analyze other high-quality integrations that share a similar architecture. For this project, which uses local polling, other local integrations (like Midea AC LAN) are a better source of inspiration than cloud-based ones (like Nibe Uplink).
+
+4.  **Plan Before Implementing:** For any change, update the `plan.md` file first. The plan should break down the task into small, verifiable, test-driven steps. Do not start coding until the plan is clear and agreed upon.
+
+5. Once you have a permission, you can start coding according to `plan.md`
+
+6. When you finish a task, update `status.md` to reflect the changes. Read `status.md` to understand the current status of the project if you lose context. Do not change the plan without permission.

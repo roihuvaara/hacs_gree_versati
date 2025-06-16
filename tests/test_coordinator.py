@@ -1,7 +1,5 @@
 """Tests for the coordinator's update functionality."""
 
-import asyncio
-import logging
 from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -9,8 +7,8 @@ import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 
-from custom_components.gree_versati.coordinator import GreeVersatiDataUpdateCoordinator
 from custom_components.gree_versati.const import DOMAIN, LOGGER
+from custom_components.gree_versati.coordinator import GreeVersatiDataUpdateCoordinator
 
 
 @pytest.mark.asyncio
@@ -35,7 +33,7 @@ async def test_coordinator_polling(hass: HomeAssistant):
     # Patch asyncio.sleep to speed up the test
     update_interval = timedelta(seconds=0.1)  # Very short for testing
 
-    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+    with patch("asyncio.sleep", new=AsyncMock()):
         # Create the coordinator with a short update interval
         coordinator = GreeVersatiDataUpdateCoordinator(
             hass=hass,
