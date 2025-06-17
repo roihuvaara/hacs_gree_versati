@@ -23,9 +23,9 @@ def test_device_info_comparison():
     client = MagicMock()
     client.mac = "AA:BB:CC:DD:EE:FF"
 
-    # Create both entities as they currently exist
-    climate_entity = GreeVersatiClimate(coordinator, client)
-    water_heater_entity = GreeVersatiWaterHeater(coordinator, client)
+    # Create both entities as they now exist (inheriting from GreeVersatiEntity)
+    climate_entity = GreeVersatiClimate(coordinator)
+    water_heater_entity = GreeVersatiWaterHeater(coordinator)
 
     # Get their device_info
     climate_device_info = climate_entity.device_info

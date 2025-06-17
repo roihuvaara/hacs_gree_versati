@@ -10,9 +10,9 @@ from homeassistant.components.climate.const import (
     HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import COOL_MODE, DOMAIN, HEAT_MODE, LOGGER
+from .entity import GreeVersatiEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -30,10 +30,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Gree Versati climate platform."""
     data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([GreeVersatiClimate(data.coordinator, data.client)])
+    async_add_entities([GreeVersatiClimate(data.coordinator)])
 
 
-class GreeVersatiClimate(CoordinatorEntity, ClimateEntity):
+class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     """Representation of a Gree Versati Climate device."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
@@ -48,12 +48,12 @@ class GreeVersatiClimate(CoordinatorEntity, ClimateEntity):
     def __init__(
         self,
         coordinator: GreeVersatiDataUpdateCoordinator,
-        client: GreeVersatiClient,
     ) -> None:
         """Initialize the climate device."""
         super().__init__(coordinator)
-        self._client = client
-        self._attr_unique_id = "space_heating"
+        # client is now available as self._client from GreeVersatiEntity
+        # Override the unique_id from GreeVersatiEntity with entity-specific ID
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_space_heating"
         self._attr_hvac_modes = [
             HVACMode.OFF,
             HVACMode.HEAT,

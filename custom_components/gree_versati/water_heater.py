@@ -9,7 +9,6 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -19,6 +18,7 @@ if TYPE_CHECKING:
     from .coordinator import GreeVersatiDataUpdateCoordinator
 
 from .const import DOMAIN, LOGGER, OPERATION_LIST
+from .entity import GreeVersatiEntity
 
 
 async def async_setup_entry(
@@ -28,10 +28,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Gree Versati water heater platform."""
     data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([GreeVersatiWaterHeater(data.coordinator, data.client)])
+    async_add_entities([GreeVersatiWaterHeater(data.coordinator)])
 
 
-class GreeVersatiWaterHeater(CoordinatorEntity, WaterHeaterEntity):
+class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     """Representation of a Gree Versati Water Heater device."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
@@ -45,12 +45,12 @@ class GreeVersatiWaterHeater(CoordinatorEntity, WaterHeaterEntity):
     def __init__(
         self,
         coordinator: GreeVersatiDataUpdateCoordinator,
-        client: Any,
     ) -> None:
         """Initialize the water heater device."""
         super().__init__(coordinator)
-        self._client = client
-        self._attr_unique_id = "water_heater"
+        # client is now available as self._client from GreeVersatiEntity
+        # Override the unique_id from GreeVersatiEntity with entity-specific ID
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_water_heater"
 
     @property
     def available(self) -> bool:
