@@ -153,7 +153,8 @@ class TestGreeVersatiConfigFlow:
 
         # Verify the result
         assert result.get("type") == FlowResultType.CREATE_ENTRY
-        assert result.get("title") == "Gree Versati"
+        # Title should match friendly name (CONF_NAME), not a hardcoded string
+        assert result.get("title") == "Test Device"
         assert result.get("data") == {
             CONF_IP: "192.168.1.100",
             CONF_PORT: 7000,

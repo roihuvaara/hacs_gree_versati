@@ -13,6 +13,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import ATTRIBUTION, DOMAIN
+from .naming import get_entry_name
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -78,7 +79,7 @@ class GreeVersatiBinarySensor(BinarySensorEntity):
                 identifiers={
                     (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
                 },
-                name=self.coordinator.config_entry.title or "Unknown",
+                name=get_entry_name(self.coordinator.config_entry),
                 manufacturer="Gree",
                 model="Versati",
             )
@@ -90,7 +91,7 @@ class GreeVersatiBinarySensor(BinarySensorEntity):
             identifiers={
                 (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
             },
-            name=self.coordinator.config_entry.title or "Unknown",
+            name=get_entry_name(self.coordinator.config_entry),
             manufacturer="Gree",
             model=model_name,
         )

@@ -9,6 +9,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
+from .naming import get_entry_name
 from .coordinator import GreeVersatiDataUpdateCoordinator
 
 
@@ -53,7 +54,7 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
     @cached_property
     def device_info(self) -> DeviceInfo | None:
         """Return device information."""
-        device_name = self.coordinator.config_entry.title or "Unknown"
+        device_name = get_entry_name(self.coordinator.config_entry)
 
         if not self.coordinator.data:
             return DeviceInfo(

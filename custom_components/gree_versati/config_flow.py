@@ -52,12 +52,19 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                     # If more than one device is found, let the user choose which one
                     # to bind
+                    def _label(d) -> str:
+                        name = d.device_info.name or "Gree Versati"
+                        mac = d.device_info.mac or ""
+                        # Append last 4 alphanumeric chars from MAC for disambiguation
+                        mac_compact = "".join(ch for ch in mac.upper() if ch.isalnum())
+                        last4 = mac_compact[-4:]
+                        suffix = f" · {last4}" if last4 else ""
+                        return f"{name}{suffix}"
+
                     device_options = {
-                        device.device_info.mac: (
-                            f"{device.device_info.name} ({device.device_info.mac})"
-                        )
-                        for device in devices
-                        if device.device_info is not None
+                        d.device_info.mac: _label(d)
+                        for d in devices
+                        if d.device_info is not None
                     }
                     return self.async_show_form(
                         step_id="select_device",
@@ -119,13 +126,16 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(mac)
         self._abort_if_unique_id_configured()
 
+        # Use a friendly non-empty name; avoid None and avoid exposing MAC in the title
+        friendly_name = device.device_info.name or "Gree Versati"
+
         return self.async_create_entry(
-            title="Gree Versati",
+            title=friendly_name,
             data={
                 CONF_IP: device.device_info.ip,
                 CONF_PORT: device.device_info.port,
                 CONF_MAC: device.device_info.mac,
-                CONF_NAME: device.device_info.name,
+                CONF_NAME: friendly_name,
                 "key": key,
             },
         )

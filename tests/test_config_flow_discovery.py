@@ -37,7 +37,8 @@ def assert_create_entry(
     if result is None:
         pytest.fail("Result is None")
     assert result.get("type") == FlowResultType.CREATE_ENTRY
-    assert result.get("title") == title
+    # Title should match the friendly name stored in data
+    assert result.get("title") == data.get(CONF_NAME, title)
     assert result.get("data") == data
 
 
@@ -279,7 +280,8 @@ async def test_bind_step_success(hass, mock_device):
         }
         assert result is not None
         assert result.get("type") == FlowResultType.CREATE_ENTRY
-        assert result.get("title") == "Gree Versati"
+        # Title should be the friendly name
+        assert result.get("title") == expected_data[CONF_NAME]
         assert result.get("data") == expected_data
 
 

@@ -10,6 +10,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import ATTRIBUTION, DOMAIN
+from .naming import get_entry_name
 
 if TYPE_CHECKING:
     from datetime import date, datetime
@@ -91,7 +92,7 @@ class GreeVersatiSensor(SensorEntity):
                 identifiers={
                     (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
                 },
-                name=self.coordinator.config_entry.title or "Unknown",
+                name=get_entry_name(self.coordinator.config_entry),
                 manufacturer="Gree",
                 model="Versati",
             )
@@ -103,7 +104,7 @@ class GreeVersatiSensor(SensorEntity):
             identifiers={
                 (DOMAIN, self.coordinator.config_entry.runtime_data.client.mac)
             },
-            name=self.coordinator.config_entry.title or "Unknown",
+            name=get_entry_name(self.coordinator.config_entry),
             manufacturer="Gree",
             model=model_name,
         )
