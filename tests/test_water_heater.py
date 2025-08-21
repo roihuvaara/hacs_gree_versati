@@ -22,12 +22,15 @@ class TestGreeVersatiWaterHeater:
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data as the entity expects
         client = MagicMock()
         client.mac = "AA:BB:CC:DD:EE:FF"
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify the water heater entity was initialized correctly
         assert water_heater._attr_temperature_unit == UnitOfTemperature.CELSIUS
@@ -41,18 +44,22 @@ class TestGreeVersatiWaterHeater:
             | WaterHeaterEntityFeature.OPERATION_MODE
         )
         assert water_heater._client == client
-        assert water_heater._attr_unique_id == "water_heater"
+        assert water_heater._attr_unique_id == "test_entry_id_water_heater"
 
     def test_translation_key(self):
         """Test translation_key property."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify translation key
         assert water_heater.translation_key == "water_heater"
@@ -61,13 +68,17 @@ class TestGreeVersatiWaterHeater:
         """Test current_temperature property."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"hot_water_temp": 50.0}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify current temperature
         assert water_heater.current_temperature == 50.0
@@ -76,13 +87,17 @@ class TestGreeVersatiWaterHeater:
         """Test target_temperature property."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"hot_water_temp_set": 55.0}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify target temperature
         assert water_heater.target_temperature == 55.0
@@ -91,13 +106,17 @@ class TestGreeVersatiWaterHeater:
         """Test current_operation property in normal mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"fast_heat_water": False}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify current operation
         assert water_heater.current_operation == "normal"
@@ -106,13 +125,17 @@ class TestGreeVersatiWaterHeater:
         """Test current_operation property in performance mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"fast_heat_water": True}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify current operation
         assert water_heater.current_operation == "performance"
@@ -122,14 +145,18 @@ class TestGreeVersatiWaterHeater:
         """Test async_set_temperature method."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.async_request_refresh = AsyncMock()
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.set_dhw_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Call set_temperature
         await water_heater.async_set_temperature(**{ATTR_TEMPERATURE: 60.0})
@@ -145,13 +172,17 @@ class TestGreeVersatiWaterHeater:
         """Test async_set_temperature method with no temperature."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.set_dhw_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Call set_temperature with no temperature
         await water_heater.async_set_temperature()
@@ -164,14 +195,18 @@ class TestGreeVersatiWaterHeater:
         """Test async_set_operation_mode method."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.async_request_refresh = AsyncMock()
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.set_dhw_mode = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Call set_operation_mode
         await water_heater.async_set_operation_mode("performance")
@@ -186,13 +221,17 @@ class TestGreeVersatiWaterHeater:
         """Test hvac_mode property when target temperature is set."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"hot_water_temp_set": 55.0}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify HVAC mode
         assert water_heater.hvac_mode == "on"
@@ -201,13 +240,17 @@ class TestGreeVersatiWaterHeater:
         """Test hvac_mode property when target temperature is not set."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"hot_water_temp_set": None}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify HVAC mode
         assert water_heater.hvac_mode == "off"
@@ -226,7 +269,13 @@ class TestGreeVersatiWaterHeater:
             "custom_components.gree_versati.water_heater.GreeVersatiWaterHeater.target_temperature",
             new_callable=MagicMock(return_value=None),
         ):
-            water_heater = GreeVersatiWaterHeater(coordinator, client)
+            # Wire runtime_data for the entity
+            coordinator.config_entry.entry_id = "test_entry_id"
+            runtime_data = MagicMock()
+            runtime_data.client = client
+            coordinator.config_entry.runtime_data = runtime_data
+
+            water_heater = GreeVersatiWaterHeater(coordinator)
             water_heater.async_set_temperature = AsyncMock()
 
             # Call set_hvac_mode with 'on'
@@ -249,7 +298,13 @@ class TestGreeVersatiWaterHeater:
             "custom_components.gree_versati.water_heater.GreeVersatiWaterHeater.target_temperature",
             new_callable=MagicMock(return_value=55.0),
         ):
-            water_heater = GreeVersatiWaterHeater(coordinator, client)
+            # Wire runtime_data for the entity
+            coordinator.config_entry.entry_id = "test_entry_id"
+            runtime_data = MagicMock()
+            runtime_data.client = client
+            coordinator.config_entry.runtime_data = runtime_data
+
+            water_heater = GreeVersatiWaterHeater(coordinator)
             water_heater.async_set_temperature = AsyncMock()
 
             # Call set_hvac_mode with 'off'
@@ -262,12 +317,16 @@ class TestGreeVersatiWaterHeater:
         """Test hvac_modes property."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify HVAC modes
         assert water_heater.hvac_modes == ["on", "off"]
@@ -276,12 +335,16 @@ class TestGreeVersatiWaterHeater:
         """Test min_temp property."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify min temperature
         assert water_heater.min_temp == 30.0
@@ -290,12 +353,16 @@ class TestGreeVersatiWaterHeater:
         """Test max_temp property."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the water heater entity
-        water_heater = GreeVersatiWaterHeater(coordinator, client)
+        water_heater = GreeVersatiWaterHeater(coordinator)
 
         # Verify max temperature
         assert water_heater.max_temp == 80.0

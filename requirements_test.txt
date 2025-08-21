@@ -1,7 +1,7 @@
 # Core test requirements
 pytest>=7.0.0
 pytest-asyncio>=0.20.0
-pytest-homeassistant-custom-component>=0.13.0
+pytest-homeassistant-custom-component>=0.13.205
 pytest-cov>=4.0.0
 pytest-sugar>=0.9.6
 

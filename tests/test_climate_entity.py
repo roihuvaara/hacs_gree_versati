@@ -21,12 +21,15 @@ class TestGreeVersatiClimate:
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.mac = "AA:BB:CC:DD:EE:FF"
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify the climate entity was initialized correctly
         assert climate._attr_temperature_unit == UnitOfTemperature.CELSIUS
@@ -40,18 +43,22 @@ class TestGreeVersatiClimate:
             | ClimateEntityFeature.TURN_ON
         )
         assert climate._client == client
-        assert climate._attr_unique_id == "space_heating"
+        assert climate._attr_unique_id == "test_entry_id_space_heating"
 
     def test_translation_key(self):
         """Test translation_key property."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify translation key
         assert climate.translation_key == "climate"
@@ -60,13 +67,17 @@ class TestGreeVersatiClimate:
         """Test current_temperature property."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"water_out_temp": 45.5}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify current temperature
         assert climate.current_temperature == 45.5
@@ -75,17 +86,21 @@ class TestGreeVersatiClimate:
         """Test target_temperature property in heat mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 4,  # Heat mode
             "heat_temp_set": 50.0,
         }
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify target temperature
         assert climate.target_temperature == 50.0
@@ -94,17 +109,21 @@ class TestGreeVersatiClimate:
         """Test target_temperature property in cool mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 1,  # Cool mode
             "cool_temp_set": 22.0,
         }
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify target temperature
         assert climate.target_temperature == 22.0
@@ -113,13 +132,17 @@ class TestGreeVersatiClimate:
         """Test target_temperature property in off mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"power": False}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify target temperature is None when off
         assert climate.target_temperature is None
@@ -128,13 +151,17 @@ class TestGreeVersatiClimate:
         """Test hvac_mode property when power is off."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {"power": False}
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify HVAC mode
         assert climate.hvac_mode == HVACMode.OFF
@@ -143,16 +170,20 @@ class TestGreeVersatiClimate:
         """Test hvac_mode property in heat mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 4,  # Heat mode
         }
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify HVAC mode
         assert climate.hvac_mode == HVACMode.HEAT
@@ -161,16 +192,20 @@ class TestGreeVersatiClimate:
         """Test hvac_mode property in cool mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 1,  # Cool mode
         }
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify HVAC mode
         assert climate.hvac_mode == HVACMode.COOL
@@ -179,16 +214,20 @@ class TestGreeVersatiClimate:
         """Test hvac_mode property with unknown mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 99,  # Unknown mode
         }
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Verify HVAC mode defaults to OFF for unknown modes
         assert climate.hvac_mode == HVACMode.OFF
@@ -198,17 +237,21 @@ class TestGreeVersatiClimate:
         """Test async_set_temperature method in heat mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 4,  # Heat mode
         }
 
-        # Create a mock client with AsyncMock for set_temperature
+        # Create a mock client with AsyncMock and wire it via runtime_data
         client = MagicMock()
         client.set_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Call set_temperature
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 50.0})
@@ -221,17 +264,21 @@ class TestGreeVersatiClimate:
         """Test async_set_temperature method in cool mode."""
         # Create a mock coordinator with data
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
             "mode": 1,  # Cool mode
         }
 
-        # Create a mock client with AsyncMock for set_temperature
+        # Create a mock client with AsyncMock and wire it via runtime_data
         client = MagicMock()
         client.set_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Call set_temperature
         await climate.async_set_temperature(**{ATTR_TEMPERATURE: 22.0})
@@ -244,13 +291,17 @@ class TestGreeVersatiClimate:
         """Test async_set_temperature method with no temperature."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.set_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Call set_temperature with no temperature
         await climate.async_set_temperature()
@@ -263,14 +314,18 @@ class TestGreeVersatiClimate:
         """Test async_set_hvac_mode method."""
         # Create a mock coordinator
         coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.async_request_refresh = AsyncMock()
 
-        # Create a mock client
+        # Create a mock client and wire it via runtime_data
         client = MagicMock()
         client.set_hvac_mode = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
 
         # Create the climate entity
-        climate = GreeVersatiClimate(coordinator, client)
+        climate = GreeVersatiClimate(coordinator)
 
         # Call set_hvac_mode
         await climate.async_set_hvac_mode(HVACMode.HEAT)

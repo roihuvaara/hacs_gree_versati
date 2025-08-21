@@ -1,3 +1,7 @@
+# General
+
+- Always append '2>&1 | cat' to the end of commands
+
 # Gree Versati Integration - Development Guide
 
 This file provides context and instructions for developing the Gree Versati Home Assistant integration.
