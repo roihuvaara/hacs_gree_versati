@@ -52,7 +52,7 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                     # If more than one device is found, let the user choose which one
                     # to bind
-                    def _label(d) -> str:
+                    def _label(d: Any) -> str:
                         name = d.device_info.name or "Gree Versati"
                         mac = d.device_info.mac or ""
                         # Append last 4 alphanumeric chars from MAC for disambiguation

@@ -1,13 +1,8 @@
 """Test device registry integration."""
 
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from unittest.mock import MagicMock
 
 from custom_components.gree_versati.climate import GreeVersatiClimate
-from custom_components.gree_versati.const import DOMAIN
 from custom_components.gree_versati.water_heater import GreeVersatiWaterHeater
 
 

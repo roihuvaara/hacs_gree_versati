@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.const import CONF_NAME
 
 DEFAULT_NAME = "Gree Versati"
 
 
-def get_entry_name(entry) -> str:
-    """Return the friendly name for a config entry.
+def get_entry_name(entry: Any) -> str:
+    """
+    Return the friendly name for a config entry.
 
     Preference order:
     1) entry.data[CONF_NAME] when present and non-empty

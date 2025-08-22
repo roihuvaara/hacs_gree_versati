@@ -45,10 +45,8 @@ class TestNaming:
         assert result["type"] == "create_entry"
         # The data should include a non-empty CONF_NAME, not None
         assert result["data"][CONF_NAME] is not None
-        assert (
-            isinstance(result["data"][CONF_NAME], str)
-            and result["data"][CONF_NAME].strip()
-        )
+        assert isinstance(result["data"][CONF_NAME], str)
+        assert result["data"][CONF_NAME].strip()
 
     def test_entity_device_info_uses_conf_name_not_title(self):
         """DeviceInfo.name should use CONF_NAME from entry data, not the entry title."""

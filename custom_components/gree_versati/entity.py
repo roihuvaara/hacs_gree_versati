@@ -9,8 +9,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN
-from .naming import get_entry_name
 from .coordinator import GreeVersatiDataUpdateCoordinator
+from .naming import get_entry_name
 
 
 class NoRuntimeDataError(HomeAssistantError):
