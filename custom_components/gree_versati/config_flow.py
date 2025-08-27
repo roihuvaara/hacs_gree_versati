@@ -10,6 +10,7 @@ from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
 
 from .client import GreeVersatiClient
 from .const import CONF_IP, DOMAIN
+from .naming import sanitize_device_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -126,8 +127,12 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(mac)
         self._abort_if_unique_id_configured()
 
-        # Use a friendly non-empty name; avoid None and avoid exposing MAC in the title
-        friendly_name = device.device_info.name or "Gree Versati"
+        # Use a friendly non-empty name and sanitize hex/MAC
+        # suffix if present
+        friendly_name = (
+            sanitize_device_name(device.device_info.name, device.device_info.mac)
+            or "Gree Versati"
+        )
 
         return self.async_create_entry(
             title=friendly_name,
