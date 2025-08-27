@@ -27,7 +27,31 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
 
 ## Next Work (prioritized)
 
-### 1. Add Options Flow (High Priority)
+### 1. Mode Control Rework (High Priority)
+- Goal: Make mode control correct and intuitive across the device’s 6 real modes: off, cool, heat, hot water only, cool+hot water, heat+hot water.
+- Approach:
+  - Add a dedicated mode select entity (Select) that exposes the 6 device modes explicitly.
+  - Keep existing `climate` and `water_heater` entities; map their state changes into the correct combined device mode in the background.
+  - Mapping rules (source of truth):
+    - climate=OFF, dhw=OFF -> device=OFF
+    - climate=COOL, dhw=OFF -> device=COOL
+    - climate=HEAT, dhw=OFF -> device=HEAT
+    - climate=OFF, dhw=ON   -> device=HOT_WATER
+    - climate=COOL, dhw=ON  -> device=COOL+HW
+    - climate=HEAT, dhw=ON  -> device=HEAT+HW
+- How to test (TDD):
+  1) Add failing tests `tests/test_mode_control.py` covering:
+     - Selecting each of the 6 modes via the new Select updates the client’s MODE/POWER (and any DHW flags) correctly and updates coordinator state.
+     - Toggling climate hvac_mode + water heater hvac_mode results in the correct combined device mode (per mapping above).
+     - climate OFF + dhw ON maps to HOT_WATER; verify entities reflect states consistently (climate may show OFF/idle while device is in HW-only mode).
+  2) Implement:
+     - New platform `select.py` with `GreeVersatiDeviceModeSelect` exposing the 6 options.
+     - Client API `set_device_mode(mode: str)` to set power/mode (+ any supporting flags) atomically, including HOT_WATER only.
+     - Update climate/water_heater to call a shared combiner when their mode toggles change.
+  3) Make tests pass; run full suite.
+  4) Document behavior in README and entity docstrings.
+
+### 2. Add Options Flow (High Priority)
 - Goal: Let users change settings after setup (first: polling interval).
 - How to test (TDD):
   1) Add failing tests in `tests/test_options_flow.py`:
@@ -37,7 +61,7 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
   3) Add `update_listener` in `__init__.py` to apply options on change.
   4) Make tests pass; run full suite.
 
-### 2. Entity Enhancements (Medium)
+### 3. Entity Enhancements (Medium)
 - Goal: Better UX on restart and richer feedback.
 - Tasks:
   - Inherit from `RestoreEntity` in `climate.py` and `water_heater.py`.
@@ -46,17 +70,17 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
 - Tests:
   - Add/extend tests to verify state restore and `hvac_action` values.
 
-### 3. Diagnostics (Low)
+### 4. Diagnostics (Low)
 - Goal: Help users troubleshoot.
 - Tasks: Add `diagnostics.py` and implement `async_get_config_entry_diagnostics`.
 - Tests: Snapshot minimal redacted data.
 
-### 4. Custom Services (Low)
+### 5. Custom Services (Low)
 - Goal: Expose advanced calls (e.g., `send_raw_command`).
 - Tasks: Add `services.yaml` and service handler.
 - Tests: Unit test service handler input/output and errors.
 
-### 5. Test Hardening and CI (Ongoing)
+### 6. Test Hardening and CI (Ongoing)
 - Replace exact-string checks with semantic assertions.
 - Use shared fixtures/factories for entries/coordinators.
 - Ensure config-flow tests always set `flow.hass` and stub unique-id where needed.

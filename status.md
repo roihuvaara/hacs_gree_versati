@@ -1,37 +1,37 @@
 # Project Status
 
-## Current Task: Options Flow (Polling Interval)
+## Current Task: Mode Control Rework (Device 6-mode logic)
 
 ### Problem Statement
-Users need to change key settings (first: polling interval) after setup without re-adding the integration.
+Device supports 6 real modes: off, cool, heat, hot water only, cool+hot water, heat+hot water. Current behavior is not logically correct across entities.
 
 ### Root Cause Analysis
-No options flow exists; coordinator interval is fixed.
+Mode is a combined device concept. Independent climate/DHW toggles must be reconciled into a single device mode; today there’s no authoritative combiner and no direct way for users to pick the 6 modes.
 
 ### TDD Progress
 
-#### Step 1: Write Failing Test 🚧 NEXT
-- Add `tests/test_options_flow.py` covering:
-  - Opening options flow shows current polling interval
-  - Submitting new interval updates `entry.options` and coordinator interval
-  - Invalid input is handled (error shown, no change applied)
+#### Step 1: Write Failing Tests 🚧 NEXT
+- Add `tests/test_mode_control.py` covering:
+  - Selecting each of the 6 modes via a new Select entity updates client MODE/POWER and DHW flags correctly (including HW-only).
+  - Changing climate hvac_mode and DHW hvac_mode results in correct combined device mode.
+  - climate OFF + DHW ON maps to HOT_WATER.
 
-#### Step 2: Implement Code Fix 🔄 PENDING
-- Add `OptionsFlowHandler` in `config_flow.py`
-- Add `update_listener` in `__init__.py` to apply `entry.options`
-- Persist chosen interval in `entry.options`
+#### Step 2: Implement Code 🔄 PENDING
+- Add `select.py` with `GreeVersatiDeviceModeSelect` exposing 6 modes.
+- Add client API `set_device_mode(mode: str)` to atomically set mode/power/flags, including HW-only.
+- Update climate/water_heater to call a shared combiner on mode changes.
 
-#### Step 3: Verify Test Passes 🔄 PENDING
-- Run new options flow tests; fix until green
+#### Step 3: Verify Tests Pass 🔄 PENDING
+- Run new mode control tests; iterate until green.
 
 #### Step 4: Fix Consequential Failures 🔄 PENDING
-- Run full test suite; adjust mocks/fixtures as needed
+- Run full test suite; adjust mocks/fixtures if needed.
 
 ### Next Steps
-1. Write failing options flow tests
-2. Implement options flow + update listener
-3. Make tests pass; run full suite
-4. Update this status with results
+1. Write failing mode control tests
+2. Implement Select entity and client `set_device_mode`
+3. Integrate combiner with climate/DHW
+4. Make tests pass; run full suite
 
 ---
 
