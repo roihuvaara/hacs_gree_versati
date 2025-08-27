@@ -21,6 +21,17 @@ Mode is a combined device concept. Independent climate/DHW toggles must be recon
 - Implemented client API `set_device_mode(mode: str)` to atomically set power/mode/DHW flag, including HW-only. Added unit tests.
 - Next: Add `select.py` with `GreeVersatiDeviceModeSelect` exposing 6 modes.
 
+#### Step 3: Write Failing Select Tests ✅ COMPLETED
+- Added `tests/test_device_mode_select.py` covering:
+  - Initialization/options expose 6 modes in stable order
+  - Selecting an option calls `client.set_device_mode` and refreshes
+  - Platform setup adds the Select entity
+- Current result: All three tests fail predictably with `ModuleNotFoundError: custom_components.gree_versati.select` (implementation pending).
+
+#### Step 4: Implement Select Entity 🔄 PENDING
+- Add `select.py` defining `GreeVersatiDeviceModeSelect` and `async_setup_entry`.
+- Wire options and `async_select_option` to client `set_device_mode`.
+
 #### Step 3: Verify Tests Pass 🔄 PENDING
 - Run new mode control tests; iterate until green.
 
