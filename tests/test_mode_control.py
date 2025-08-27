@@ -6,6 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from custom_components.gree_versati.const import COOL_MODE, HEAT_MODE
+from gree_versati.awhp_device import AwhpProps
+
 
 @pytest.mark.asyncio
 async def test_client_has_set_device_mode_api():
@@ -34,10 +37,11 @@ async def test_hw_only_mapping_sets_flags_correctly():
     client._data = {}
 
     # Execute: set HW-only mode
-    with pytest.raises(Exception):
-        # Expect failure for now (TDD) until implemented
-        await client.set_device_mode("hot_water")
+    client.async_get_data = AsyncMock(return_value={})
+    await client.set_device_mode("hot_water")
 
-
-
-
+    # Assert: correct properties were set
+    device.set_property.assert_any_call(AwhpProps.MODE, HEAT_MODE)
+    device.set_property.assert_any_call(AwhpProps.POWER, value=True)
+    device.set_property.assert_any_call(AwhpProps.FAST_HEAT_WATER, value=True)
+    device.push_state_update.assert_awaited()

@@ -282,3 +282,50 @@ class GreeVersatiClient:
 
         await self.device.push_state_update()
         await self.async_get_data()
+
+    async def set_device_mode(self, mode: str) -> None:
+        """Set combined device mode across HVAC and DHW.
+
+        Supported modes:
+        - "off"
+        - "cool"
+        - "heat"
+        - "hot_water" (hot water only)
+        - "cool_hot_water" (cooling + hot water)
+        - "heat_hot_water" (heating + hot water)
+        """
+        if self.device is None:
+            raise DeviceNotInitializedError
+
+        # Normalize
+        normalized_mode = (mode or "").strip().lower()
+
+        if normalized_mode == "off":
+            self.device.set_property(AwhpProps.POWER, value=False)
+        elif normalized_mode == "cool":
+            self.device.set_property(AwhpProps.MODE, COOL_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            # Ensure DHW boost flag is not set when in space-only modes
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=False)
+        elif normalized_mode == "heat":
+            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=False)
+        elif normalized_mode == "hot_water":
+            # Represent HW-only as power on, space mode to heat, DHW flag enabled
+            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=True)
+        elif normalized_mode == "cool_hot_water":
+            self.device.set_property(AwhpProps.MODE, COOL_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=True)
+        elif normalized_mode == "heat_hot_water":
+            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
+            self.device.set_property(AwhpProps.POWER, value=True)
+            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=True)
+        else:
+            raise ValueError(f"Unsupported device mode: {mode}")
+
+        await self.device.push_state_update()
+        await self.async_get_data()

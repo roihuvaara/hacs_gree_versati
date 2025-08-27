@@ -17,10 +17,9 @@ Mode is a combined device concept. Independent climate/DHW toggles must be recon
 - Result: 1 failed, 1 passed. Failure matches expectation (missing `set_device_mode`).
 - Awaiting approval to accept failing tests as the baseline for implementation.
 
-#### Step 2: Implement Code 🔄 PENDING
-- Add `select.py` with `GreeVersatiDeviceModeSelect` exposing 6 modes.
-- Add client API `set_device_mode(mode: str)` to atomically set mode/power/flags, including HW-only.
-- Update climate/water_heater to call a shared combiner on mode changes.
+#### Step 2: Implement Code ✅ COMPLETED
+- Implemented client API `set_device_mode(mode: str)` to atomically set power/mode/DHW flag, including HW-only. Added unit tests.
+- Next: Add `select.py` with `GreeVersatiDeviceModeSelect` exposing 6 modes.
 
 #### Step 3: Verify Tests Pass 🔄 PENDING
 - Run new mode control tests; iterate until green.

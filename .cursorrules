@@ -92,3 +92,8 @@ To ensure high-quality contributions, please follow these guidelines, which are 
 5. Once you have a permission, you can start coding according to `plan.md`
 
 6. When you finish a task, update `status.md` to reflect the changes. Read `status.md` to understand the current status of the project if you lose context. Do not change the plan without permission.
+
+# Additional Notes
+
+If you find the terminal commands hanging, instruct the user to append this to the end of ~/.bashrc:
+`[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path bash )"`
