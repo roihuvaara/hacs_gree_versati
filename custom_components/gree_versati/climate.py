@@ -67,7 +67,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     @property
     def translation_key(self) -> str:
         """Return the translation key to translate the entity's name."""
-        return "climate"
+        return "space_heating"
 
     @property
     def current_temperature(self) -> float | None:

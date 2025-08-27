@@ -26,10 +26,14 @@
     },
     "entity": {
         "climate": {
-            "name": "Gree Versati Space Heating"
+            "space_heating": {
+                "name": "Space Heating"
+            }
         },
         "water_heater": {
-            "name": "Gree Versati Water Heater"
+            "water_heater": {
+                "name": "Water Heater"
+            }
         }
     }
 }

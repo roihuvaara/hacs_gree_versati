@@ -61,7 +61,7 @@ class TestGreeVersatiClimate:
         climate = GreeVersatiClimate(coordinator)
 
         # Verify translation key
-        assert climate.translation_key == "climate"
+        assert climate.translation_key == "space_heating"
 
     def test_current_temperature(self):
         """Test current_temperature property."""
