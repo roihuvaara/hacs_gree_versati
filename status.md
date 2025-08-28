@@ -40,8 +40,12 @@ Mode is a combined device concept. Independent climate/DHW toggles must be recon
 - Added wiring tests in `tests/test_mode_wiring.py`; all pass.
 - Full suite green: 153/153.
 
-#### Step 3: Verify Tests Pass 🔄 PENDING
-- Run new mode control tests; iterate until green.
+#### Step 3: Verify Tests Pass 🔄 IN PROGRESS
+- Wrote additional OFF→MODE→ON sequencing tests in `tests/test_mode_control.py`:
+  - `test_set_device_mode_off_before_mode_when_on` FAILS predictably (missing OFF-before-MODE sequencing)
+  - `test_set_device_mode_when_off_sets_mode_then_on` PASSES
+  - `test_set_device_mode_off_always_powers_off` PASSES
+- Failure is the exact expected gap. Approved to implement sequencing.
 
 #### Step 4: Fix Consequential Failures 🔄 PENDING
 - Run full test suite; adjust mocks/fixtures if needed.

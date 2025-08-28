@@ -32,6 +32,13 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
 - Approach:
   - Add a dedicated mode select entity (Select) that exposes the 6 device modes explicitly.
   - Keep existing `climate` and `water_heater` entities; map their state changes into the correct combined device mode in the background.
+  - Respect device limitation: mode can only be changed while device power is OFF.
+  - Switching logic (enforce OFF-before-mode):
+    - Centralize in client API `set_device_mode(mode: str)`.
+    - If current power is ON and target mode differs from current: send POWER OFF -> set MODE -> if target != OFF, send POWER ON.
+    - If current power is OFF: set MODE -> if target != OFF, send POWER ON.
+    - Protect sequence with an async per-device lock; coalesce duplicate requests.
+    - On failure mid-sequence, leave power OFF and raise a descriptive error.
   - Mapping rules (source of truth):
     - climate=OFF, dhw=OFF -> device=OFF
     - climate=COOL, dhw=OFF -> device=COOL
@@ -44,6 +51,11 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
      - Selecting each of the 6 modes via the new Select updates the client’s MODE/POWER (and any DHW flags) correctly and updates coordinator state.
      - Toggling climate hvac_mode + water heater hvac_mode results in the correct combined device mode (per mapping above).
      - climate OFF + dhw ON maps to HOT_WATER; verify entities reflect states consistently (climate may show OFF/idle while device is in HW-only mode).
+     - With device currently ON, selecting a different non-OFF mode performs OFF -> MODE -> ON and never attempts MODE while ON.
+     - With device currently OFF, selecting a non-OFF mode sets MODE then turns POWER ON.
+     - Selecting OFF always results in POWER OFF regardless of current mode.
+     - Simulate lower-level error if MODE-while-ON would fail; verify no such call is made before OFF.
+     - Concurrency: two rapid selections are serialized (lock) and final state matches the last selection.
   2) Implement:
      - New platform `select.py` with `GreeVersatiDeviceModeSelect` exposing the 6 options.
      - Client API `set_device_mode(mode: str)` to set power/mode (+ any supporting flags) atomically, including HOT_WATER only.
