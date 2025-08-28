@@ -51,7 +51,31 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
   3) Make tests pass; run full suite.
   4) Document behavior in README and entity docstrings.
 
-### 2. Add Options Flow (High Priority)
+### 2. DHW Electric Booster Usage Switch (High Priority)
+- Goal: Replace all "Rapid/Fast/Performance" toggles with a single, clear switch that enables the device to use the domestic hot water (DHW) electric heater element. The switch grants permission; the device decides if/when to engage the heater. Expose the actual heater activity as read-only state.
+- Scope & UX:
+  - Add one switch entity on the DHW device: friendly name "DHW electric heater"; entity id `switch.<device>_dhw_electric_heater`.
+  - Remove any "fast/rapid/performance" switches from `climate` and `water_heater` entities.
+  - Expose read-only "electric heater active" status (attribute on the DHW entity initially; a dedicated `binary_sensor` can be added later if needed).
+- Behavior:
+  - Turning the switch ON sets an "allow_electric_heater" flag on the device; it does not directly force the heater ON.
+  - Coordinator reads and provides both: `allow_electric_heater` (permission) and `electric_heater_active` (actual runtime state reported by device).
+- How to test (TDD):
+  1) Add failing tests `tests/test_dhw_electric_heater_switch.py` covering:
+     - Platform creates exactly one switch under the DHW device with the expected name/id.
+     - Turning the switch ON/OFF calls client `set_allow_electric_heater(True/False)` and schedules a refresh.
+     - Attribute/state includes `electric_heater_active` reflecting coordinator/device data; flipping the switch does not directly change `electric_heater_active`.
+     - No climate "fast/performance" switch exists; legacy terms removed from translations.
+  2) Implement:
+     - Activate `switch.py` platform; add `GreeVersatiDhwElectricHeaterSwitch`.
+     - Add client facade methods: `get_allow_electric_heater()`, `set_allow_electric_heater(bool)`, and surface `electric_heater_active`.
+     - Update `coordinator` to poll and expose these fields.
+     - Remove any fast/rapid/performance toggles/usages from `climate.py` and `water_heater.py`.
+     - Update `translations/en.json` labels accordingly.
+  3) Make tests pass; run full suite.
+  4) Optionally (later): add a `binary_sensor.dhw_electric_heater_active` entity if an explicit entity (not just attribute) is desired.
+
+### 3. Add Options Flow (High Priority)
 - Goal: Let users change settings after setup (first: polling interval).
 - How to test (TDD):
   1) Add failing tests in `tests/test_options_flow.py`:
@@ -61,7 +85,7 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
   3) Add `update_listener` in `__init__.py` to apply options on change.
   4) Make tests pass; run full suite.
 
-### 3. Entity Enhancements (Medium)
+### 4. Entity Enhancements (Medium)
 - Goal: Better UX on restart and richer feedback.
 - Tasks:
   - Inherit from `RestoreEntity` in `climate.py` and `water_heater.py`.
@@ -70,17 +94,17 @@ This plan is written to be easy to follow. Each item says what to do, how to tes
 - Tests:
   - Add/extend tests to verify state restore and `hvac_action` values.
 
-### 4. Diagnostics (Low)
+### 5. Diagnostics (Low)
 - Goal: Help users troubleshoot.
 - Tasks: Add `diagnostics.py` and implement `async_get_config_entry_diagnostics`.
 - Tests: Snapshot minimal redacted data.
 
-### 5. Custom Services (Low)
+### 6. Custom Services (Low)
 - Goal: Expose advanced calls (e.g., `send_raw_command`).
 - Tasks: Add `services.yaml` and service handler.
 - Tests: Unit test service handler input/output and errors.
 
-### 6. Test Hardening and CI (Ongoing)
+### 7. Test Hardening and CI (Ongoing)
 - Replace exact-string checks with semantic assertions.
 - Use shared fixtures/factories for entries/coordinators.
 - Ensure config-flow tests always set `flow.hass` and stub unique-id where needed.

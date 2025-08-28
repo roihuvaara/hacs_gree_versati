@@ -197,10 +197,11 @@ class TestGreeVersatiWaterHeater:
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.async_request_refresh = AsyncMock()
+        coordinator.data = {"power": False, "mode": 4}
 
         # Create a mock client and wire it via runtime_data
         client = MagicMock()
-        client.set_dhw_mode = AsyncMock()
+        client.set_device_mode = AsyncMock()
         runtime_data = MagicMock()
         runtime_data.client = client
         coordinator.config_entry.runtime_data = runtime_data
@@ -211,8 +212,8 @@ class TestGreeVersatiWaterHeater:
         # Call set_operation_mode
         await water_heater.async_set_operation_mode("performance")
 
-        # Verify client.set_dhw_mode was called with correct parameters
-        client.set_dhw_mode.assert_called_once_with("performance")
+        # Verify combined mode call: power off + performance => hot_water
+        client.set_device_mode.assert_awaited_once_with("hot_water")
 
         # Verify coordinator.async_request_refresh was called
         coordinator.async_request_refresh.assert_called_once()

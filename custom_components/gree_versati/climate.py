@@ -117,5 +117,16 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
-        await self._client.set_hvac_mode(hvac_mode)
+        # Combine requested HVAC mode with current DHW flag to a device mode
+        fast = bool(self.coordinator.data.get("fast_heat_water"))
+        if hvac_mode == HVACMode.OFF:
+            combined = "hot_water" if fast else "off"
+        elif hvac_mode == HVACMode.HEAT:
+            combined = "heat_hot_water" if fast else "heat"
+        elif hvac_mode == HVACMode.COOL:
+            combined = "cool_hot_water" if fast else "cool"
+        else:
+            combined = "off"
+
+        await self._client.set_device_mode(combined)
         await self.coordinator.async_request_refresh()

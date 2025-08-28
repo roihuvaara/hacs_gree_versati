@@ -94,7 +94,24 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
-        await self._client.set_dhw_mode(operation_mode)
+        # Combine DHW operation flag with current HVAC power/mode into device mode
+        fast = operation_mode == "performance"
+        power = bool(self.coordinator.data.get("power"))
+        mode_val = self.coordinator.data.get("mode")
+
+        if not power and fast:
+            combined = "hot_water"
+        elif not power and not fast:
+            combined = "off"
+        else:
+            if mode_val == 4:  # HEAT_MODE
+                combined = "heat_hot_water" if fast else "heat"
+            elif mode_val == 1:  # COOL_MODE
+                combined = "cool_hot_water" if fast else "cool"
+            else:
+                combined = "off"
+
+        await self._client.set_device_mode(combined)
         await self.coordinator.async_request_refresh()
 
     @property

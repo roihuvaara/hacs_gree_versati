@@ -28,9 +28,17 @@ Mode is a combined device concept. Independent climate/DHW toggles must be recon
   - Platform setup adds the Select entity
 - Current result: All three tests fail predictably with `ModuleNotFoundError: custom_components.gree_versati.select` (implementation pending).
 
-#### Step 4: Implement Select Entity 🔄 PENDING
-- Add `select.py` defining `GreeVersatiDeviceModeSelect` and `async_setup_entry`.
-- Wire options and `async_select_option` to client `set_device_mode`.
+#### Step 4: Implement Select Entity ✅ COMPLETED
+- Added `select.py` defining `GreeVersatiDeviceModeSelect` and `async_setup_entry`.
+- Options expose 6 modes; selection calls client `set_device_mode` and refreshes.
+
+#### Step 5: Wire Climate/DHW to Combiner ✅ COMPLETED
+- Updated `climate.async_set_hvac_mode` to compute combined mode using `fast_heat_water` and call `set_device_mode`.
+- Updated `water_heater.async_set_operation_mode` to compute combined mode using `power`/`mode` and call `set_device_mode`.
+
+#### Step 6: Verify Tests Pass ✅ COMPLETED
+- Added wiring tests in `tests/test_mode_wiring.py`; all pass.
+- Full suite green: 153/153.
 
 #### Step 3: Verify Tests Pass 🔄 PENDING
 - Run new mode control tests; iterate until green.
