@@ -40,12 +40,15 @@ Mode is a combined device concept. Independent climate/DHW toggles must be recon
 - Added wiring tests in `tests/test_mode_wiring.py`; all pass.
 - Full suite green: 153/153.
 
-#### Step 3: Verify Tests Pass 🔄 IN PROGRESS
-- Wrote additional OFF→MODE→ON sequencing tests in `tests/test_mode_control.py`:
-  - `test_set_device_mode_off_before_mode_when_on` FAILS predictably (missing OFF-before-MODE sequencing)
-  - `test_set_device_mode_when_off_sets_mode_then_on` PASSES
-  - `test_set_device_mode_off_always_powers_off` PASSES
-- Failure is the exact expected gap. Approved to implement sequencing.
+#### Step 3: Verify Tests Pass ✅ COMPLETED
+- Implemented OFF→MODE→ON sequencing; targeted tests pass and full suite is green.
+
+#### New Task: DHW Tank Heater (Permission + Active) 🔄 IN PROGRESS
+- Wrote failing tests in `tests/test_dhw_tank_heater.py`:
+  - `test_platform_creates_switch_and_binary_sensor` PASSES (scaffolding)
+  - `test_switch_toggles_permission_and_refreshes` FAILS predictably (switch currently toggles dummy title, not tank heater permission)
+  - `test_binary_sensor_reflects_active_status_read_only` FAILS predictably (binary sensor still uses dummy title logic)
+- Next: Implement client/coordinator fields and dedicated entities per plan.
 
 #### Step 4: Fix Consequential Failures 🔄 PENDING
 - Run full test suite; adjust mocks/fixtures if needed.
