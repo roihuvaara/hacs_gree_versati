@@ -1,13 +1,14 @@
 """Test pytest compatibility."""
 
-import gree_versati
 import pytest
+
+from custom_components.gree_versati import protocol
 
 
 def test_module_import():
-    """Test that the gree_versati module can be imported."""
-    assert gree_versati is not None
-    print(f"Found gree_versati module at: {gree_versati.__file__}")
+    """Test that the vendored protocol package can be imported."""
+    assert protocol is not None
+    print(f"Found protocol package at: {protocol.__file__}")
 
 
 @pytest.mark.asyncio

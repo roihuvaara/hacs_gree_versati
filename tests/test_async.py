@@ -1,4 +1,4 @@
-"""Async tests for the gree_versati integration."""
+﻿"""Async tests for the gree_versati integration."""
 
 import asyncio
 import unittest
@@ -58,7 +58,6 @@ class TestGreeVersatiAsync(unittest.TestCase):
                 port=self.config["port"],
                 mac=self.config["mac"],
                 key=self.config["key"],
-                loop=self.loop,
             )
 
             # Run the initialize method
@@ -109,7 +108,6 @@ class TestGreeVersatiAsync(unittest.TestCase):
                 port=self.config["port"],
                 mac=self.config["mac"],
                 key=self.config["key"],
-                loop=self.loop,
             )
 
             # Initialize client

@@ -40,8 +40,8 @@ async def test_coordinator_polling(hass: HomeAssistant):
             name=DOMAIN,
             logger=LOGGER,
             update_interval=update_interval,
+            config_entry=config_entry,
         )
-        coordinator.config_entry = config_entry
 
         # Initialize the coordinator with the first update
         await coordinator.async_config_entry_first_refresh()
@@ -91,8 +91,8 @@ async def test_coordinator_first_update_retry(hass: HomeAssistant):
             name=DOMAIN,
             logger=LOGGER,
             update_interval=timedelta(seconds=30),
+            config_entry=config_entry,
         )
-        coordinator.config_entry = config_entry
 
         # Initialize the coordinator with the first refresh
         await coordinator.async_config_entry_first_refresh()
@@ -131,8 +131,8 @@ async def test_coordinator_entity_update(hass: HomeAssistant):
             name=DOMAIN,
             logger=LOGGER,
             update_interval=timedelta(seconds=0.1),
+            config_entry=config_entry,
         )
-        coordinator.config_entry = config_entry
 
         # Create a mock listener and register it
         listener = MagicMock()

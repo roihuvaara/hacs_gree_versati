@@ -6,8 +6,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.gree_versati.const import COOL_MODE, HEAT_MODE
-from gree_versati.awhp_device import AwhpProps
+from custom_components.gree_versati.const import (
+    MODE_COOL,
+    MODE_HEAT,
+    MODE_HOT_WATER,
+)
+from custom_components.gree_versati.protocol import AwhpProps
 
 
 @pytest.mark.asyncio
@@ -22,8 +26,8 @@ async def test_client_has_set_device_mode_api():
 
 
 @pytest.mark.asyncio
-async def test_hw_only_mapping_sets_flags_correctly():
-    """Selecting HOT_WATER should set device power on and DHW flag, climate mode off."""
+async def test_hw_only_mapping_sets_mod_correctly():
+    """Selecting HOT_WATER should write Mod=2 (hot water only) and power on."""
     from custom_components.gree_versati.client import GreeVersatiClient
 
     client = GreeVersatiClient()
@@ -40,10 +44,13 @@ async def test_hw_only_mapping_sets_flags_correctly():
     client.async_get_data = AsyncMock(return_value={})
     await client.set_device_mode("hot_water")
 
-    # Assert: correct properties were set
-    device.set_property.assert_any_call(AwhpProps.MODE, HEAT_MODE)
+    # Assert: hot water is a first-class Mod value, not a FastHtWter flag
+    device.set_property.assert_any_call(AwhpProps.MODE, MODE_HOT_WATER)
     device.set_property.assert_any_call(AwhpProps.POWER, value=True)
-    device.set_property.assert_any_call(AwhpProps.FAST_HEAT_WATER, value=True)
+    for call in device.set_property.call_args_list:
+        assert call.args[0] != AwhpProps.FAST_HEAT_WATER, (
+            "FastHtWter is the boost flag and must not be touched by mode changes"
+        )
     device.push_state_update.assert_awaited()
 
 
@@ -69,7 +76,7 @@ async def test_set_device_mode_off_before_mode_when_on():
     device.push_state_update = AsyncMock()
     client.device = device
     # Current state: ON in COOL
-    client._data = {"power": True, "mode": COOL_MODE}
+    client._data = {"power": True, "mode": MODE_COOL}
     client.async_get_data = AsyncMock(return_value={})
 
     await client.set_device_mode("heat")
@@ -89,6 +96,35 @@ async def test_set_device_mode_off_before_mode_when_on():
     assert idx_power_off < idx_mode < idx_power_on, (
         f"Order must be OFF -> MODE -> ON, got events: {events}"
     )
+    # The OFF, MODE and ON steps must each be pushed to the device
+    # separately, otherwise only the final state ever reaches the unit.
+    assert device.push_state_update.await_count >= 3
+
+
+@pytest.mark.asyncio
+async def test_set_device_mode_writes_correct_mod_values():
+    """Each logical mode writes its Versati Mod value (not the AC table)."""
+    from custom_components.gree_versati.client import GreeVersatiClient
+
+    expected = {
+        "heat": 1,
+        "hot_water": 2,
+        "cool_hot_water": 3,
+        "heat_hot_water": 4,
+        "cool": 5,
+    }
+    for mode, mod_value in expected.items():
+        client = GreeVersatiClient()
+        device = MagicMock()
+        device.set_property = MagicMock()
+        device.push_state_update = AsyncMock()
+        client.device = device
+        client._data = {"power": False, "mode": None}
+        client.async_get_data = AsyncMock(return_value={})
+
+        await client.set_device_mode(mode)
+
+        device.set_property.assert_any_call(AwhpProps.MODE, mod_value)
 
 
 @pytest.mark.asyncio
@@ -111,7 +147,7 @@ async def test_set_device_mode_when_off_sets_mode_then_on():
     device.set_property = MagicMock(side_effect=record)
     device.push_state_update = AsyncMock()
     client.device = device
-    client._data = {"power": False, "mode": COOL_MODE}
+    client._data = {"power": False, "mode": MODE_COOL}
     client.async_get_data = AsyncMock(return_value={})
 
     await client.set_device_mode("heat")
@@ -146,7 +182,7 @@ async def test_set_device_mode_off_always_powers_off():
     device.set_property = MagicMock(side_effect=record)
     device.push_state_update = AsyncMock()
     client.device = device
-    client._data = {"power": True, "mode": HEAT_MODE}
+    client._data = {"power": True, "mode": MODE_HEAT}
     client.async_get_data = AsyncMock(return_value={})
 
     await client.set_device_mode("off")

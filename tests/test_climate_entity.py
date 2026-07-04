@@ -112,7 +112,7 @@ class TestGreeVersatiClimate:
         coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
-            "mode": 1,  # Cool mode
+            "mode": 5,  # Cool mode
             "cool_temp_set": 22.0,
         }
 
@@ -195,7 +195,7 @@ class TestGreeVersatiClimate:
         coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
-            "mode": 1,  # Cool mode
+            "mode": 5,  # Cool mode
         }
 
         # Create a mock client and wire it via runtime_data
@@ -232,6 +232,38 @@ class TestGreeVersatiClimate:
         # Verify HVAC mode defaults to OFF for unknown modes
         assert climate.hvac_mode == HVACMode.OFF
 
+    def test_temp_limits_heat(self):
+        """Heating water-out setpoint range is 20-60 (not HA's default 7-35)."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.data = {"power": True, "mode": 1}  # Heat
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        climate = GreeVersatiClimate(coordinator)
+
+        assert climate.min_temp == 20
+        assert climate.max_temp == 60
+
+    def test_temp_limits_cool(self):
+        """Cooling water-out setpoint range is 7-25."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.data = {"power": True, "mode": 5}  # Cool
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        climate = GreeVersatiClimate(coordinator)
+
+        assert climate.min_temp == 7
+        assert climate.max_temp == 25
+
     @pytest.mark.asyncio
     async def test_async_set_temperature_heat(self):
         """Test async_set_temperature method in heat mode."""
@@ -267,7 +299,7 @@ class TestGreeVersatiClimate:
         coordinator.config_entry.entry_id = "test_entry_id"
         coordinator.data = {
             "power": True,
-            "mode": 1,  # Cool mode
+            "mode": 5,  # Cool mode
         }
 
         # Create a mock client with AsyncMock and wire it via runtime_data

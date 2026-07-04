@@ -11,25 +11,36 @@ from homeassistant.components.climate.const import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
-from .const import COOL_MODE, DOMAIN, HEAT_MODE, LOGGER
+from .const import (
+    COOL_TEMP_MAX,
+    COOL_TEMP_MIN,
+    COOLING_MODES,
+    DHW_MODES,
+    HEAT_TEMP_MAX,
+    HEAT_TEMP_MIN,
+    HEATING_MODES,
+    LOGGER,
+)
 from .entity import GreeVersatiEntity
 
 if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import GreeVersatiDataUpdateCoordinator
+    from .data import GreeVersatiConfigEntry
+
+# All I/O goes through the coordinator/client; no parallel entity updates
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: GreeVersatiConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Gree Versati climate platform."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([GreeVersatiClimate(data.coordinator)])
+    async_add_entities([GreeVersatiClimate(entry.runtime_data.coordinator)])
 
 
 class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
@@ -38,6 +49,7 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
     _attr_has_entity_name = True
+    _attr_translation_key = "space_heating"
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_OFF
@@ -58,16 +70,6 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
             HVACMode.HEAT,
             HVACMode.COOL,
         ]
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return self.coordinator.last_update_success
-
-    @property
-    def translation_key(self) -> str:
-        """Return the translation key to translate the entity's name."""
-        return "space_heating"
 
     @property
     def current_temperature(self) -> float | None:
@@ -95,11 +97,26 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         if not self.coordinator.data.get("power"):
             return HVACMode.OFF
         mode = self.coordinator.data.get("mode")
-        if mode == HEAT_MODE:
+        if mode in HEATING_MODES:
             return HVACMode.HEAT
-        if mode == COOL_MODE:
+        if mode in COOLING_MODES:
             return HVACMode.COOL
+        # hot-water-only (Mod=2): no space heating/cooling running
         return HVACMode.OFF
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum settable water-out temperature."""
+        if self.hvac_mode == HVACMode.COOL:
+            return COOL_TEMP_MIN
+        return HEAT_TEMP_MIN
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum settable water-out temperature."""
+        if self.hvac_mode == HVACMode.COOL:
+            return COOL_TEMP_MAX
+        return HEAT_TEMP_MAX
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -117,14 +134,18 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
-        # Combine requested HVAC mode with current DHW flag to a device mode
-        fast = bool(self.coordinator.data.get("fast_heat_water"))
+        # Combine requested HVAC mode with current DHW participation
+        # (DHW is part of the device Mod value, not a separate flag)
+        dhw_active = (
+            bool(self.coordinator.data.get("power"))
+            and self.coordinator.data.get("mode") in DHW_MODES
+        )
         if hvac_mode == HVACMode.OFF:
-            combined = "hot_water" if fast else "off"
+            combined = "hot_water" if dhw_active else "off"
         elif hvac_mode == HVACMode.HEAT:
-            combined = "heat_hot_water" if fast else "heat"
+            combined = "heat_hot_water" if dhw_active else "heat"
         elif hvac_mode == HVACMode.COOL:
-            combined = "cool_hot_water" if fast else "cool"
+            combined = "cool_hot_water" if dhw_active else "cool"
         else:
             combined = "off"
 

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:3.11-bullseye
+FROM mcr.microsoft.com/devcontainers/python:3.13-bookworm
 
 # Set environment variables
 ENV PYTHONUNBUFFERED 1
@@ -25,5 +25,6 @@ WORKDIR /workspace
 # Switch to non-root user
 USER $USERNAME
 
-# Install pytest and other testing packages globally (to avoid venv issues)
-RUN pip install --no-cache-dir pytest pytest-asyncio pytest-homeassistant-custom-component 
+# Install the pinned test environment (brings matched HA/pytest versions)
+COPY requirements_test.txt /tmp/requirements_test.txt
+RUN pip install --no-cache-dir -r /tmp/requirements_test.txt

@@ -5,14 +5,19 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from gree_versati.awhp_device import AwhpDevice, AwhpProps
-from gree_versati.deviceinfo import DeviceInfo
-from gree_versati.discovery import Discovery
-
-from .const import COOL_MODE, HEAT_MODE, LOGGER
-from .discovery_listener import DiscoveryListener
-
-# Define constants for HVAC mode values are now in const.py
+from .const import (
+    COOLING_MODES,
+    DEVICE_MODE_TO_MOD,
+    HEATING_MODES,
+    LOGGER,
+)
+from .protocol import (
+    AwhpDevice,
+    AwhpProps,
+    DeviceInfo,
+    GreeProtocolError,
+    search_devices,
+)
 
 
 class DeviceNotInitializedError(RuntimeError):
@@ -40,7 +45,7 @@ class GreeVersatiClient:
         port: int | None = None,
         mac: str | None = None,
         key: str | None = None,
-        loop: asyncio.AbstractEventLoop | None = None,
+        cipher_type: str | None = None,
     ) -> None:
         """
         Initialize the Gree Versati client.
@@ -50,14 +55,14 @@ class GreeVersatiClient:
             port: The port number of the device
             mac: The MAC address of the device
             key: The encryption key for the device
-            loop: The event loop to use
+            cipher_type: The negotiated cipher scheme ("ecb" or "gcm")
 
         """
-        self.loop = loop or asyncio.get_event_loop()
         self.ip = ip
         self.port = port
         self.mac = mac
         self.key = key
+        self.cipher_type = cipher_type
         self.device: AwhpDevice | None = None
         self._data: dict[str, Any] = {}  # Add cache for device data
         self._mode_change_lock = asyncio.Lock()
@@ -126,9 +131,9 @@ class GreeVersatiClient:
         """
         Initialize the device connection.
 
-        If the connection parameters (ip, port, mac) are provided, create a DeviceInfo
-        and then an AwhpDevice. Then, bind to the device using the stored key if
-        provided.
+        With connection parameters (ip, port, mac) a device is created and
+        bound: a stored key + cipher type is reused as-is, otherwise a new
+        key is negotiated. Without parameters, discovery picks a device.
         """
         LOGGER.debug("Initializing gree versati")
 
@@ -139,23 +144,21 @@ class GreeVersatiClient:
                 self.port,
                 self.mac,
             )
-            # Create the device info from stored parameters.
             device_info = DeviceInfo(self.ip, self.port, self.mac, name=self.mac)
-            self.device = AwhpDevice(device_info)
+            self.device = AwhpDevice(
+                device_info, key=self.key, cipher_type=self.cipher_type
+            )
 
             try:
-                if self.key:
-                    # Use the provided key to bind.
-                    self.device.device_key = self.key
-                    LOGGER.debug("Re-binding with existing key")
-                    await self.device.bind(key=self.key)
-                else:
-                    # Bind without a key, letting the device negotiate one.
-                    await self.device.bind()
-            except Exception as exc:
-                # Handle binding errors as needed.
+                await self.device.bind()
+            except GreeProtocolError as exc:
                 error_msg = f"Binding failed: {exc}"
                 raise ConnectionError(error_msg) from exc
+
+            # Reflect what the device negotiated so the config entry can
+            # persist it for the next restart.
+            self.key = self.device.key
+            self.cipher_type = self.device.cipher_type
         else:
             # Optionally, run discovery if connection parameters are not provided.
             devices = await self.run_discovery()
@@ -165,25 +168,11 @@ class GreeVersatiClient:
                 raise NoDevicesDiscoveredError
 
     async def run_discovery(self) -> list[AwhpDevice]:
-        """
-        Run network discovery to find Gree devices.
-
-        This method creates a DiscoveryListener, adds it to a Discovery instance,
-        waits for the scan to finish, and returns a list containing the
-        discovered device (if any).
-        """
+        """Scan the network and return the discovered (unbound) devices."""
         LOGGER.debug("Scanning network for Gree devices")
-        discovery = Discovery()
-        listener = DiscoveryListener()
-        discovery.add_listener(listener)
-
-        await discovery.scan(wait_for=10)  # Wait for 10 seconds (or adjust as needed)
-        LOGGER.info("Done discovering devices")
-
-        device = listener.get_device()
-        if device:
-            return [device]
-        return []
+        infos = await search_devices(wait_for=5)
+        LOGGER.info("Done discovering devices, found %d", len(infos))
+        return [AwhpDevice(info) for info in infos]
 
     @property
     def current_temperature(self) -> float | None:
@@ -204,10 +193,11 @@ class GreeVersatiClient:
         """Get the current HVAC mode."""
         mode = self._data.get("mode")
 
-        if mode == HEAT_MODE:  # Heat mode
+        if mode in HEATING_MODES:
             return "heat"
-        if mode == COOL_MODE:  # Cool mode
+        if mode in COOLING_MODES:
             return "cool"
+        # hot-water-only (Mod=2) or unknown: no space heating/cooling
         return "off"
 
     @property
@@ -255,21 +245,8 @@ class GreeVersatiClient:
         await self.async_get_data()
 
     async def set_hvac_mode(self, mode: str) -> None:
-        """Set the HVAC mode."""
-        if self.device is None:
-            raise DeviceNotInitializedError
-
-        if mode == "heat":
-            self.device.set_property(AwhpProps.MODE, HEAT_MODE)
-            self.device.set_property(AwhpProps.POWER, value=True)
-        elif mode == "cool":
-            self.device.set_property(AwhpProps.MODE, COOL_MODE)
-            self.device.set_property(AwhpProps.POWER, value=True)
-        elif mode == "off":
-            self.device.set_property(AwhpProps.POWER, value=False)
-
-        await self.device.push_state_update()
-        await self.async_get_data()
+        """Set space heating/cooling mode (delegates to set_device_mode)."""
+        await self.set_device_mode(mode)
 
     async def set_dhw_mode(self, mode: str) -> None:
         """Set the DHW mode."""
@@ -285,81 +262,45 @@ class GreeVersatiClient:
         await self.async_get_data()
 
     async def set_device_mode(self, mode: str) -> None:
-        """Set combined device mode across HVAC and DHW.
+        """
+        Set the combined device mode by writing the Mod property.
 
-        Enforces device limitation: MODE changes only while POWER is OFF.
-
-        Supported modes:
-        - "off"
-        - "cool"
-        - "heat"
-        - "hot_water" (hot water only)
-        - "cool_hot_water" (cooling + hot water)
-        - "heat_hot_water" (heating + hot water)
+        The six logical modes map directly to device Mod values (see
+        DEVICE_MODE_TO_MOD); hot-water participation is part of Mod, not a
+        separate flag. The device only accepts Mod changes while powered
+        off (the official app enforces the same OFF -> MODE -> ON
+        sequence), so each step is pushed as a separate state update.
         """
         if self.device is None:
             raise DeviceNotInitializedError
 
         normalized_mode = (mode or "").strip().lower()
-
-        # Determine target properties
-        if normalized_mode == "off":
-            target_power = False
-            target_mode_prop = None
-            target_fast = False
-        elif normalized_mode == "cool":
-            target_power = True
-            target_mode_prop = COOL_MODE
-            target_fast = False
-        elif normalized_mode == "heat":
-            target_power = True
-            target_mode_prop = HEAT_MODE
-            target_fast = False
-        elif normalized_mode == "hot_water":
-            target_power = True
-            target_mode_prop = HEAT_MODE
-            target_fast = True
-        elif normalized_mode == "cool_hot_water":
-            target_power = True
-            target_mode_prop = COOL_MODE
-            target_fast = True
-        elif normalized_mode == "heat_hot_water":
-            target_power = True
-            target_mode_prop = HEAT_MODE
-            target_fast = True
-        else:
-            raise ValueError(f"Unsupported device mode: {mode}")
-
-        current_power = bool(self._data.get("power", False))
-        current_mode_prop = self._data.get("mode")
+        if normalized_mode not in DEVICE_MODE_TO_MOD:
+            error_msg = f"Unsupported device mode: {mode}"
+            raise ValueError(error_msg)
+        target_mod = DEVICE_MODE_TO_MOD[normalized_mode]
 
         async with self._mode_change_lock:
-            # If turning off: do it directly
-            if target_power is False:
+            current_power = bool(self._data.get("power", False))
+            current_mod = self._data.get("mode")
+
+            # Turning off: power off only, leave Mod untouched
+            if target_mod is None:
                 self.device.set_property(AwhpProps.POWER, value=False)
-                # Optionally reset DHW boost permission when turning off (safe default)
-                self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=False)
                 await self.device.push_state_update()
                 await self.async_get_data()
                 return
 
-            # If currently ON and mode property must change, turn OFF first
-            if (
-                current_power
-                and target_mode_prop is not None
-                and current_mode_prop != target_mode_prop
-            ):
-                self.device.set_property(AwhpProps.POWER, value=False)
+            if current_mod != target_mod:
+                # Power off first (own push, so the OFF reaches the device
+                # before the mode change)
+                if current_power:
+                    self.device.set_property(AwhpProps.POWER, value=False)
+                    await self.device.push_state_update()
 
-            # Apply mode and DHW flag while power is (now) OFF
-            if target_mode_prop is not None:
-                self.device.set_property(AwhpProps.MODE, target_mode_prop)
+                self.device.set_property(AwhpProps.MODE, target_mod)
+                await self.device.push_state_update()
 
-            self.device.set_property(AwhpProps.FAST_HEAT_WATER, value=target_fast)
-
-            # Finally, ensure POWER state matches target
-            if target_power:
-                self.device.set_property(AwhpProps.POWER, value=True)
-
+            self.device.set_property(AwhpProps.POWER, value=True)
             await self.device.push_state_update()
             await self.async_get_data()

@@ -4,9 +4,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.gree_versati.client import GreeVersatiClient
+from custom_components.gree_versati.protocol import GreeBindError
 
 
 @pytest.mark.asyncio
@@ -15,9 +17,11 @@ async def test_device_initialization_success(
     mock_config_entry: MockConfigEntry,
 ):
     """Test that device initialization succeeds with proper parameters."""
-    # Create a mock device
+    # Create a mock device that reports negotiated credentials
     mock_device = MagicMock()
-    mock_device.bind = AsyncMock()
+    mock_device.bind = AsyncMock(return_value="negotiated_key")
+    mock_device.key = "negotiated_key"
+    mock_device.cipher_type = "ecb"
 
     # Patch the AwhpDevice and DeviceInfo classes
     with (
@@ -42,24 +46,25 @@ async def test_device_initialization_success(
         assert client.device is not None
         assert client.device == mock_device
 
-        # Verify bind was called with the correct key
-        mock_bind = mock_device.bind
-        assert mock_bind.call_count == 1
-        assert mock_bind.call_args.kwargs == {"key": mock_config_entry.data["key"]}
+        # Bind is a no-op/negotiation without arguments now; the stored
+        # key and cipher live on the device object itself
+        mock_device.bind.assert_awaited_once_with()
+
+        # The client reflects what the device negotiated so the config
+        # entry can persist it
+        assert client.key == "negotiated_key"
+        assert client.cipher_type == "ecb"
 
 
 @pytest.mark.asyncio
-async def test_device_initialization_failure_missing_cipher(
+async def test_device_initialization_bind_failure(
     hass: HomeAssistant,
     mock_config_entry: MockConfigEntry,
 ):
-    """Test that device initialization fails when cipher is missing but key is provided."""
-    # Create a mock device
+    """Test that device initialization surfaces bind failures."""
+    # Create a mock device whose bind fails
     mock_device = MagicMock()
-    # Simulate the error we're seeing in the logs
-    mock_device.bind = AsyncMock(
-        side_effect=Exception("cipher must be provided when key is provided"),
-    )
+    mock_device.bind = AsyncMock(side_effect=GreeBindError("no answer"))
 
     # Patch the AwhpDevice and DeviceInfo classes
     with (
@@ -77,20 +82,14 @@ async def test_device_initialization_failure_missing_cipher(
             key=mock_config_entry.data["key"],
         )
 
-        # Initialize the device - this should raise an exception
-        with pytest.raises(Exception) as excinfo:
+        # Initialize the device - this should raise a ConnectionError
+        with pytest.raises(ConnectionError, match="Binding failed: no answer"):
             await client.initialize()
-
-        # Verify the exception message
-        assert "Binding failed: cipher must be provided when key is provided" in str(
-            excinfo.value,
-        )
 
 
 @pytest.mark.asyncio
-async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
-    """Test that the integration setup fails when cipher is required but not provided."""
-    # Create a mock entry
+async def test_init_setup_entry_retries_on_bind_failure(hass: HomeAssistant):
+    """Setup raises ConfigEntryNotReady on bind failure so HA retries."""
     entry_data = {
         "ip": "192.168.1.100",
         "port": 7000,
@@ -101,9 +100,7 @@ async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
 
     # Create a real client but mock the device
     mock_device = MagicMock()
-    mock_device.bind = AsyncMock(
-        side_effect=Exception("cipher must be provided when key is provided"),
-    )
+    mock_device.bind = AsyncMock(side_effect=GreeBindError("no answer"))
 
     # Patch the necessary classes
     with (
@@ -124,13 +121,8 @@ async def test_init_setup_entry_fails_with_missing_cipher(hass: HomeAssistant):
             entry_id="test",
         )
 
-        # Call the setup entry function directly
-        result = await async_setup_entry(hass, entry)
+        # Setup must signal HA to retry rather than fail permanently
+        with pytest.raises(ConfigEntryNotReady):
+            await async_setup_entry(hass, entry)
 
-        # Verify the result is False, indicating setup failed
-        assert result is False
-
-        # Verify the device.bind method was called
-        mock_bind = mock_device.bind
-        assert mock_bind.call_count == 1
-        assert mock_bind.call_args.kwargs == {"key": entry_data["key"]}
+        mock_device.bind.assert_awaited_once_with()

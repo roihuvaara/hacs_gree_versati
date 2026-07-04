@@ -27,6 +27,8 @@ ignore = [
 
 # Special rules for test files
 [lint.per-file-ignores]
+# HA platform modules must be named after their platform
+"custom_components/gree_versati/select.py" = ["A005"]
 "tests/**/*.py" = [
     "S101",      # Use of `assert` detected (fine in tests)
     "ANN001",    # Missing type annotation for function argument

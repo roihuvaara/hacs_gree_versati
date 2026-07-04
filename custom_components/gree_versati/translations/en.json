@@ -27,12 +27,25 @@
     "entity": {
         "climate": {
             "space_heating": {
-                "name": "Space Heating"
+                "name": "Space heating"
             }
         },
         "water_heater": {
             "water_heater": {
-                "name": "Water Heater"
+                "name": "Water heater"
+            }
+        },
+        "select": {
+            "device_mode": {
+                "name": "Device mode",
+                "state": {
+                    "off": "Off",
+                    "cool": "Cool",
+                    "heat": "Heat",
+                    "hot_water": "Hot water",
+                    "cool_hot_water": "Cool + hot water",
+                    "heat_hot_water": "Heat + hot water"
+                }
             }
         }
     }

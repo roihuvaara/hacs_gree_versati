@@ -10,42 +10,28 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
-# from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 
 from .client import GreeVersatiClient
 from .const import CONF_IP, DOMAIN, LOGGER
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .data import GreeVersatiData
-from .package_helper import force_update_dependency
 
 if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
+    from .data import GreeVersatiConfigEntry
+
 PLATFORMS: list[Platform] = [
-    # Platform.SENSOR,
-    # Platform.DEVICE,
-    # Platform.BINARY_SENSOR,
-    # Platform.SWITCH,
     Platform.CLIMATE,
+    Platform.SELECT,
     Platform.WATER_HEATER,
 ]
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """
-    Set up the integration from YAML if present.
-
-    Since we are using a config flow (UI based configuration), this function only
-    ensures that the integration's data container exists.
-    """
-    hass.data.setdefault(DOMAIN, {})
-    return True
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: GreeVersatiConfigEntry) -> bool:
     """
     Set up the Gree Versati integration from a config entry.
 
@@ -55,29 +41,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
       - CONF_MAC: the device's MAC address
       - CONF_NAME: the device name (or a fallback value)
       - "key": the negotiated binding key
+      - "cipher_type": the negotiated cipher scheme (absent on old entries)
     """
     LOGGER.debug("Starting setup of Gree Versati integration")
-
-    # Force update/reinstall dependency from manifest.json
-    await force_update_dependency(hass)
 
     ip = entry.data[CONF_IP]
     port = entry.data[CONF_PORT]
     mac = entry.data[CONF_MAC]
     name = entry.data[CONF_NAME]
-    key = entry.data["key"]
+    key = entry.data.get("key")
+    cipher_type = entry.data.get("cipher_type")
 
     # Create the client using the stored connection parameters and key.
-    client = GreeVersatiClient(ip=ip, port=port, mac=mac, key=key)
+    client = GreeVersatiClient(
+        ip=ip, port=port, mac=mac, key=key, cipher_type=cipher_type
+    )
 
     try:
         LOGGER.debug("Initializing device connection")
         await client.initialize()
         LOGGER.debug("Device initialization successful")
-    except Exception as exc:  # noqa: BLE001
-        # We catch all exceptions here to ensure setup can fail gracefully
-        LOGGER.error("Failed to initialize device '%s' (%s): %s", name, mac, exc)
-        return False
+    except (ConnectionError, OSError) as exc:
+        error_msg = f"Failed to initialize device '{name}' ({mac}): {exc}"
+        raise ConfigEntryNotReady(error_msg) from exc
+
+    # Persist negotiated credentials (old entries lack cipher_type, and
+    # entries created before the bind fix stored key=None)
+    if key != client.key or cipher_type != client.cipher_type:
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, "key": client.key, "cipher_type": client.cipher_type},
+        )
 
     # Create the data container first
     data = GreeVersatiData(
@@ -92,6 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=DOMAIN,
         logger=LOGGER,
         update_interval=timedelta(seconds=30),
+        config_entry=entry,
     )
     LOGGER.debug(
         "Coordinator created with update interval: %s", coordinator.update_interval
@@ -99,39 +94,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Link everything together
     data.coordinator = coordinator
-    coordinator.config_entry = entry
-    coordinator.config_entry.runtime_data = data
+    entry.runtime_data = data
     LOGGER.debug("Coordinator linked to config entry and runtime data")
 
-    try:
-        LOGGER.debug("Performing initial data refresh")
-        await coordinator.async_config_entry_first_refresh()
-        LOGGER.debug("Initial data refresh successful")
-    except Exception as exc:  # noqa: BLE001
-        # We catch all exceptions here to ensure setup can fail gracefully
-        LOGGER.error("Failed initial data refresh for '%s': %s", name, exc)
-        return False
-
-    # Store everything in hass.data
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = data
+    LOGGER.debug("Performing initial data refresh")
+    # Raises ConfigEntryNotReady on failure, so HA retries automatically
+    await coordinator.async_config_entry_first_refresh()
+    LOGGER.debug("Initial data refresh successful")
 
     # Forward the config entry setup to platforms
     LOGGER.debug("Setting up platforms")
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     LOGGER.debug("Gree Versati integration setup complete")
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """
-    Unload a config entry.
-
-    This function unloads the platforms and removes the integration's stored data.
-    """
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-    return unload_ok
+async def async_unload_entry(
+    hass: HomeAssistant, entry: GreeVersatiConfigEntry
+) -> bool:
+    """Unload a config entry (runtime_data is discarded by HA)."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

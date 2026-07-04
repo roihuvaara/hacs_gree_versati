@@ -2,9 +2,9 @@
 
 from unittest.mock import MagicMock
 
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 
-from custom_components.gree_versati.const import ATTRIBUTION, DOMAIN
+from custom_components.gree_versati.const import DOMAIN
 from custom_components.gree_versati.entity import GreeVersatiEntity
 
 
@@ -23,7 +23,6 @@ class TestGreeVersatiEntity:
         entity = GreeVersatiEntity(coordinator)
 
         # Verify the entity was initialized correctly
-        assert entity._attr_attribution == ATTRIBUTION
         assert entity._attr_has_entity_name is True
         assert entity._attr_unique_id == "test_entry_id"
         assert entity._client == coordinator.config_entry.runtime_data.client
@@ -47,6 +46,7 @@ class TestGreeVersatiEntity:
         # Create expected device info
         expected_device_info = DeviceInfo(
             identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            connections={(CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:ff")},
             name="Test Device",
             manufacturer="Gree",
             model="Versati (III)",
@@ -74,6 +74,7 @@ class TestGreeVersatiEntity:
         # Create expected device info
         expected_device_info = DeviceInfo(
             identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")},
+            connections={(CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:ff")},
             name="Test Device",
             manufacturer="Gree",
             model="Versati",

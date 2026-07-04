@@ -30,6 +30,7 @@ def mock_device():
     device.name = "Test Device"
     device.ip = "192.168.1.100"
     device.bind = AsyncMock(return_value="test_key")
+    device.cipher_type = "ecb"
     return device
 
 
@@ -161,6 +162,7 @@ class TestGreeVersatiConfigFlow:
             CONF_MAC: "AA:BB:CC:DD:EE:FF",
             CONF_NAME: "Test Device",
             "key": "test_key",
+            "cipher_type": "ecb",
         }
 
         # Verify unique ID was set

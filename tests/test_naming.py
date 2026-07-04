@@ -32,7 +32,9 @@ class TestNaming:
             return "test-key"
 
         device = SimpleNamespace(
-            device_info=device_info, bind=AsyncMock(side_effect=fake_bind)
+            device_info=device_info,
+            bind=AsyncMock(side_effect=fake_bind),
+            cipher_type="ecb",
         )
 
         with patch(

@@ -12,15 +12,22 @@ This integration enables connection with Gree Versati Air to Water Heat Pumps in
 
 - Climate entity for heating and cooling control
 - Water heater entity for domestic hot water control
+- Device mode select exposing all six device modes
 - Network auto-discovery of compatible devices
-- Support for multiple operation modes
+- Fully self-contained: the local UDP protocol is implemented inside the
+  integration (MIT licensed), no external Python dependencies
 
 ## Supported Entities
 
 | Entity Type | Capabilities |
 |------------|----------|
-| Climate | Temperature control, Mode selection (Heat/Cool/Off) |
-| Water Heater | Temperature control, Mode selection (Normal/Performance) |
+| Climate | Water-out setpoint (heating 20–60 °C, cooling 7–25 °C), Mode selection (Heat/Cool/Off) |
+| Water Heater | Tank setpoint (40–80 °C), Operation (Off/Heat pump/Performance boost) |
+| Select | Direct device mode: off, heat, cool, hot water, heat+hot water, cool+hot water |
+
+Mode changes follow the device's requirement of switching power off
+before changing mode (the official app does the same), so a brief
+off/on cycle during mode changes is expected.
 
 ## Installation
 
@@ -95,4 +102,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Credits
 
-This integration builds upon work from the [GreeClimate](https://github.com/cmroche/greeclimate) project and adapts it specifically for Gree Versati Air to Water Heat Pumps.
+The local protocol implementation in `custom_components/gree_versati/protocol/`
+is a clean-room MIT implementation written from publicly documented protocol
+facts and packet captures. Earlier versions depended on a fork of the
+[GreeClimate](https://github.com/cmroche/greeclimate) project.

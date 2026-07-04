@@ -1,14 +1,16 @@
-"""BlueprintEntity class."""
+"""Base entity for Gree Versati."""
 
 from __future__ import annotations
 
-from functools import cached_property
-
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    DeviceInfo,
+    format_mac,
+)
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION, DOMAIN
+from .const import DOMAIN
 from .coordinator import GreeVersatiDataUpdateCoordinator
 from .naming import get_entry_name
 
@@ -32,7 +34,6 @@ class NoEntryIdError(HomeAssistantError):
 class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
     """Base class for Gree Versati entities."""
 
-    _attr_attribution: str | None = ATTRIBUTION
     _attr_has_entity_name: bool = True
 
     def __init__(self, coordinator: GreeVersatiDataUpdateCoordinator) -> None:
@@ -51,24 +52,22 @@ class GreeVersatiEntity(CoordinatorEntity[GreeVersatiDataUpdateCoordinator]):
 
         self._attr_unique_id = coordinator.config_entry.entry_id
 
-    @cached_property
+    @property
     def device_info(self) -> DeviceInfo | None:
         """Return device information."""
         device_name = get_entry_name(self.coordinator.config_entry)
 
-        if not self.coordinator.data:
-            return DeviceInfo(
-                identifiers={(DOMAIN, self._client.mac)},
-                name=device_name,
-                manufacturer="Gree",
-                model="Versati",
-            )
-
-        model_series = self.coordinator.data.get("versati_series")
+        data = self.coordinator.data or {}
+        model_series = data.get("versati_series")
         model_name = f"Versati ({model_series})" if model_series else "Versati"
+
+        connections: set[tuple[str, str]] = set()
+        if isinstance(self._client.mac, str) and self._client.mac:
+            connections.add((CONNECTION_NETWORK_MAC, format_mac(self._client.mac)))
 
         return DeviceInfo(
             identifiers={(DOMAIN, self._client.mac)},
+            connections=connections,
             name=device_name,
             manufacturer="Gree",
             model=model_name,

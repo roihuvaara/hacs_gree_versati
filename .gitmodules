@@ -1,4 +1,0 @@
-[submodule "greeclimate"]
-	path = custom_components/gree_versati/greeclimate_versati
-	url = https://github.com/roihuvaara/greeclimate
-	branch = versati-nordic-awhp

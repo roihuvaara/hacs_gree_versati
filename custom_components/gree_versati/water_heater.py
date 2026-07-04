@@ -11,24 +11,37 @@ from homeassistant.components.water_heater import (
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
 if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from .coordinator import GreeVersatiDataUpdateCoordinator
+    from .data import GreeVersatiConfigEntry
 
-from .const import DOMAIN, LOGGER, OPERATION_LIST
+from .const import (
+    COOLING_MODES,
+    DHW_MODES,
+    DHW_TEMP_MAX,
+    DHW_TEMP_MIN,
+    HEATING_MODES,
+    LOGGER,
+    OPERATION_LIST,
+    OPERATION_MODE_HEAT_PUMP,
+    OPERATION_MODE_OFF,
+    OPERATION_MODE_PERFORMANCE,
+)
 from .entity import GreeVersatiEntity
+
+# All I/O goes through the coordinator/client; no parallel entity updates
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: GreeVersatiConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Gree Versati water heater platform."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([GreeVersatiWaterHeater(data.coordinator)])
+    async_add_entities([GreeVersatiWaterHeater(entry.runtime_data.coordinator)])
 
 
 class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
@@ -37,9 +50,11 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_operation_list = OPERATION_LIST
     _attr_has_entity_name = True
+    _attr_translation_key = "water_heater"
     _attr_supported_features = (
         WaterHeaterEntityFeature.TARGET_TEMPERATURE
         | WaterHeaterEntityFeature.OPERATION_MODE
+        | WaterHeaterEntityFeature.ON_OFF
     )
 
     def __init__(
@@ -51,16 +66,6 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         # client is now available as self._client from GreeVersatiEntity
         # Override the unique_id from GreeVersatiEntity with entity-specific ID
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_water_heater"
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return self.coordinator.last_update_success
-
-    @property
-    def translation_key(self) -> str | None:
-        """Return the translation key to translate the entity's name."""
-        return "water_heater"
 
     @property
     def current_temperature(self) -> float | None:
@@ -79,11 +84,16 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     @property
     def current_operation(self) -> str | None:
         """Return current operation."""
-        mode = (
-            "performance" if self.coordinator.data.get("fast_heat_water") else "normal"
-        )
-        LOGGER.debug("DHW operation mode: %s", mode)
-        return mode
+        power = bool(self.coordinator.data.get("power"))
+        mode = self.coordinator.data.get("mode")
+        if not power or mode not in DHW_MODES:
+            operation = OPERATION_MODE_OFF
+        elif self.coordinator.data.get("fast_heat_water"):
+            operation = OPERATION_MODE_PERFORMANCE
+        else:
+            operation = OPERATION_MODE_HEAT_PUMP
+        LOGGER.debug("DHW operation mode: %s", operation)
+        return operation
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -94,61 +104,52 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
-        # Combine DHW operation flag with current HVAC power/mode into device mode
-        fast = operation_mode == "performance"
+        # DHW participation is part of the device Mod value: combine the
+        # requested DHW state with the current space heating/cooling mode.
         power = bool(self.coordinator.data.get("power"))
         mode_val = self.coordinator.data.get("mode")
 
-        if not power and fast:
-            combined = "hot_water"
-        elif not power and not fast:
-            combined = "off"
+        if power and mode_val in HEATING_MODES:
+            base = "heat"
+        elif power and mode_val in COOLING_MODES:
+            base = "cool"
         else:
-            if mode_val == 4:  # HEAT_MODE
-                combined = "heat_hot_water" if fast else "heat"
-            elif mode_val == 1:  # COOL_MODE
-                combined = "cool_hot_water" if fast else "cool"
-            else:
-                combined = "off"
+            base = None
+
+        if operation_mode == OPERATION_MODE_OFF:
+            combined = base or "off"
+        elif base:
+            combined = f"{base}_hot_water"
+        else:
+            combined = "hot_water"
 
         await self._client.set_device_mode(combined)
+
+        # FastHtWter is only the boost flag, never the DHW on/off switch
+        if operation_mode != OPERATION_MODE_OFF:
+            dhw_boost = (
+                "performance"
+                if operation_mode == OPERATION_MODE_PERFORMANCE
+                else "normal"
+            )
+            await self._client.set_dhw_mode(dhw_boost)
+
         await self.coordinator.async_request_refresh()
 
-    @property
-    def hvac_mode(self) -> str | None:
-        """
-        Return the current HVAC mode.
+    async def async_turn_on(self, **kwargs: Any) -> None:  # noqa: ARG002
+        """Turn DHW on in normal (heat pump) operation."""
+        await self.async_set_operation_mode(OPERATION_MODE_HEAT_PUMP)
 
-        In this example, if a target temperature is set, the water heater is 'on',
-        otherwise it's 'off'.
-        """
-        return "on" if self.target_temperature is not None else "off"
-
-    async def async_set_hvac_mode(self, hvac_mode: str) -> None:
-        """Set the HVAC mode for the water heater."""
-        target_temp = None
-        if hvac_mode == "off":
-            # Set to None to turn off
-            pass  # We'll just pass None to async_set_temperature
-        elif self.target_temperature is None:
-            # Set default target temperature if currently None
-            target_temp = 50.0
-        else:
-            target_temp = self.target_temperature
-
-        await self.async_set_temperature(temperature=target_temp)
-
-    @property
-    def hvac_modes(self) -> list[str]:
-        """Return the list of available HVAC modes."""
-        return ["on", "off"]
+    async def async_turn_off(self, **kwargs: Any) -> None:  # noqa: ARG002
+        """Turn DHW off."""
+        await self.async_set_operation_mode(OPERATION_MODE_OFF)
 
     @property
     def min_temp(self) -> float:
         """Return the minimum allowed temperature."""
-        return 30.0
+        return DHW_TEMP_MIN
 
     @property
     def max_temp(self) -> float:
         """Return the maximum allowed temperature."""
-        return 80.0
+        return DHW_TEMP_MAX

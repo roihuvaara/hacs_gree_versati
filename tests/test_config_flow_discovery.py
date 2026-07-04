@@ -62,6 +62,7 @@ def mock_device():
     device.name = "Test Device"
     device.ip = "192.168.1.100"
     device.bind = AsyncMock(return_value="test_key")
+    device.cipher_type = "ecb"
     return device
 
 
@@ -277,6 +278,7 @@ async def test_bind_step_success(hass, mock_device):
             CONF_PORT: 7000,
             CONF_NAME: "Test Device",
             "key": "test_key",
+            "cipher_type": "ecb",
         }
         assert result is not None
         assert result.get("type") == FlowResultType.CREATE_ENTRY

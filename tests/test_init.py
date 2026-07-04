@@ -9,6 +9,17 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.gree_versati.const import DOMAIN
 
 
+def test_platforms_include_mode_select():
+    """The device-mode select platform must actually be loaded."""
+    from homeassistant.const import Platform
+
+    from custom_components.gree_versati import PLATFORMS
+
+    assert Platform.SELECT in PLATFORMS
+    assert Platform.CLIMATE in PLATFORMS
+    assert Platform.WATER_HEATER in PLATFORMS
+
+
 @pytest.mark.asyncio
 async def test_setup_entry(hass: HomeAssistant, mock_config_entry: MockConfigEntry):
     """Test successful setup of config entry."""

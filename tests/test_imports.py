@@ -1,28 +1,28 @@
-"""Test importing the gree_versati module."""
+"""Test importing the vendored protocol package."""
 
 import unittest
 
 
 class TestImports(unittest.TestCase):
-    """Test importing the gree_versati module."""
+    """Test importing the vendored protocol package."""
 
-    def test_gree_versati(self):
-        """Test importing the gree_versati module."""
-        import gree_versati
+    def test_protocol_package(self):
+        """Test importing the protocol package."""
+        from custom_components.gree_versati import protocol
 
-        self.assertIsNotNone(gree_versati)
-        print(f"Found gree_versati at: {gree_versati.__file__}")
+        self.assertIsNotNone(protocol)
 
-        # Test importing specific classes
-        from gree_versati.awhp_device import AwhpDevice, AwhpProps
+        from custom_components.gree_versati.protocol import AwhpDevice, AwhpProps
 
         self.assertIsNotNone(AwhpDevice)
         self.assertIsNotNone(AwhpProps)
 
     def test_other_classes(self):
-        """Test importing other classes from gree_versati."""
-        from gree_versati.deviceinfo import DeviceInfo
-        from gree_versati.discovery import Discovery
+        """Test importing supporting classes from the protocol package."""
+        from custom_components.gree_versati.protocol import (
+            DeviceInfo,
+            search_devices,
+        )
 
         self.assertIsNotNone(DeviceInfo)
-        self.assertIsNotNone(Discovery)
+        self.assertIsNotNone(search_devices)

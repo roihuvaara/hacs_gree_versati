@@ -1,16 +1,14 @@
 {
   "domain": "gree_versati",
   "name": "Gree Versati",
-  "brand": "gree",
   "codeowners": [
     "@roihuvaara"
   ],
   "config_flow": true,
   "documentation": "https://github.com/roihuvaara/hacs_gree_versati",
+  "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/roihuvaara/hacs_gree_versati/issues",
-  "requirements": [
-    "gree_versati@git+https://github.com/roihuvaara/greeclimate@r1.0.12"
-  ],
-  "version": "0.1.5"
+  "requirements": [],
+  "version": "0.2.0"
 }

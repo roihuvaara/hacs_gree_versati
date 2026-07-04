@@ -41,7 +41,8 @@ Tests are run using `pytest`.
 All the below component files are located in `custom_components/gree_versati/`:
 - `__init__.py`: Handles the main integration setup, entry loading/unloading, and initialization of the coordinator and client.
 - `config_flow.py`: Manages the user-facing setup process, including device discovery and binding.
-- `client.py`: A facade that simplifies interaction with the `greeclimate_versati_fork` library, handling communication with the heat pump.
+- `client.py`: A facade over the vendored `protocol/` package, handling communication with the heat pump.
+- `protocol/`: Self-contained, MIT-licensed implementation of the Gree local UDP protocol (cipher, network transport, discovery, AWHP device). No external dependencies beyond Home Assistant's own `cryptography` package.
 - `coordinator.py`: The `DataUpdateCoordinator` responsible for polling the device for state updates and notifying entities.
 - `entity.py`: Provides a base class for Gree Versati entities, managing common properties like device info.
 - `climate.py`: Defines the `ClimateEntity` for controlling space heating and cooling.
@@ -49,9 +50,7 @@ All the below component files are located in `custom_components/gree_versati/`:
 - `const.py`: Contains constants used across the integration, such as domain name, logger, and operational modes.
 - `data.py`: Defines a dataclass to hold runtime instances of the client and coordinator.
 - `manifest.json`: Contains metadata for the integration, including dependencies, version, and supported platforms.
-- `package_helper.py`: A utility to force re-installation of dependencies from the manifest at startup.
-- `discovery_listener.py`: Implements a listener to handle the network discovery of Gree Versati devices.
-- `switch.py` / `sensor.py` / `binary_sensor.py`: Placeholder platforms that are not currently active in the integration.
+- `select.py`: Defines the device-mode `SelectEntity` exposing all six combined device modes.
 - `translations/en.json`: Contains all user-facing strings for internationalization (i18n).
 
 ## Tests
@@ -60,7 +59,7 @@ The integration has a comprehensive test suite in the `tests/` directory using `
 - **Core Component Tests**:
     - `test_init.py`: Tests the main integration setup and unload processes defined in `__init__.py`.
     - `test_coordinator.py`: Verifies that the `DataUpdateCoordinator` correctly fetches and manages data from the device.
-    - `test_package_helper.py`: Ensures the dependency installation helper works as expected.
+    - `tests/protocol/`: Tests the vendored protocol package (ciphers, device, discovery) against an in-process UDP emulator (`emulator.py`).
 - **Client and Discovery Tests**:
     - A series of files (`test_client_*.py`, `test_discovery_*.py`, `test_device_initialization.py`) that test low-level client communication, device discovery, binding, and data handling.
 - **Configuration Flow Tests**:

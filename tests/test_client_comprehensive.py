@@ -1,12 +1,12 @@
-"""Comprehensive tests for the GreeVersatiClient class."""
+﻿"""Comprehensive tests for the GreeVersatiClient class."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from gree_versati.awhp_device import AwhpProps
 
 from custom_components.gree_versati.client import GreeVersatiClient
-from custom_components.gree_versati.const import COOL_MODE, HEAT_MODE
+from custom_components.gree_versati.const import MODE_COOL, MODE_HEAT
+from custom_components.gree_versati.protocol import AwhpProps
 
 
 @pytest.fixture
@@ -125,72 +125,40 @@ class TestGreeVersatiClientComprehensive:
     @pytest.mark.asyncio
     async def test_run_discovery(self):
         """Test run_discovery method."""
-        # Create mock device
-        mock_device = MagicMock()
+        from custom_components.gree_versati.protocol import DeviceInfo
 
-        # Create mock discovery and listener
-        mock_discovery = MagicMock()
-        mock_discovery.scan = AsyncMock()
-        mock_discovery.add_listener = MagicMock()
+        info = DeviceInfo(ip="192.168.1.50", port=7000, mac="aabbccddeeff")
 
-        mock_listener = MagicMock()
-        mock_listener.get_device.return_value = mock_device
-
-        with (
-            patch(
-                "custom_components.gree_versati.client.Discovery",
-                return_value=mock_discovery,
-            ),
-            patch(
-                "custom_components.gree_versati.client.DiscoveryListener",
-                return_value=mock_listener,
-            ),
-        ):
+        with patch(
+            "custom_components.gree_versati.client.search_devices",
+            new=AsyncMock(return_value=[info]),
+        ) as mock_search:
             # Create a client
             client = GreeVersatiClient()
 
             # Run discovery
             devices = await client.run_discovery()
 
-            # Verify discovery was called
-            mock_discovery.add_listener.assert_called_once_with(mock_listener)
-            mock_discovery.scan.assert_called_once()
-
-            # Verify devices were returned
-            assert devices == [mock_device]
+            # Verify discovery was called and wrapped into devices
+            mock_search.assert_awaited_once()
+            assert len(devices) == 1
+            assert devices[0].device_info == info
 
     @pytest.mark.asyncio
     async def test_run_discovery_no_devices(self):
         """Test run_discovery method when no devices are found."""
-        # Create mock discovery and listener
-        mock_discovery = MagicMock()
-        mock_discovery.scan = AsyncMock()
-        mock_discovery.add_listener = MagicMock()
-
-        mock_listener = MagicMock()
-        mock_listener.get_device.return_value = None
-
-        with (
-            patch(
-                "custom_components.gree_versati.client.Discovery",
-                return_value=mock_discovery,
-            ),
-            patch(
-                "custom_components.gree_versati.client.DiscoveryListener",
-                return_value=mock_listener,
-            ),
-        ):
+        with patch(
+            "custom_components.gree_versati.client.search_devices",
+            new=AsyncMock(return_value=[]),
+        ) as mock_search:
             # Create a client
             client = GreeVersatiClient()
 
             # Run discovery
             devices = await client.run_discovery()
 
-            # Verify discovery was called
-            mock_discovery.add_listener.assert_called_once_with(mock_listener)
-            mock_discovery.scan.assert_called_once()
-
             # Verify no devices were returned
+            mock_search.assert_awaited_once()
             assert devices == []
 
     @pytest.mark.asyncio
@@ -224,11 +192,11 @@ class TestGreeVersatiClientComprehensive:
             assert client.current_temperature == 45.5
 
             # Test target_temperature in heat mode
-            client._data["mode"] = HEAT_MODE  # Heat mode
+            client._data["mode"] = MODE_HEAT  # Heat mode
             assert client.target_temperature == 45
 
             # Test target_temperature in cool mode
-            client._data["mode"] = COOL_MODE  # Cool mode
+            client._data["mode"] = MODE_COOL  # Cool mode
             assert client.target_temperature == 22
 
             # Test target_temperature in off mode
@@ -236,11 +204,11 @@ class TestGreeVersatiClientComprehensive:
             assert client.target_temperature is None
 
             # Test hvac_mode in heat mode
-            client._data["mode"] = HEAT_MODE  # Heat mode
+            client._data["mode"] = MODE_HEAT  # Heat mode
             assert client.hvac_mode == "heat"
 
             # Test hvac_mode in cool mode
-            client._data["mode"] = COOL_MODE  # Cool mode
+            client._data["mode"] = MODE_COOL  # Cool mode
             assert client.hvac_mode == "cool"
 
             # Test hvac_mode in other mode
@@ -297,7 +265,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature in heat mode
-            client._data["mode"] = HEAT_MODE  # Heat mode
+            client._data["mode"] = MODE_HEAT  # Heat mode
             await client.set_temperature(50, mode="heat")
 
             # Verify heat_temp_set was set
@@ -339,7 +307,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature in cool mode
-            client._data["mode"] = COOL_MODE  # Cool mode
+            client._data["mode"] = MODE_COOL  # Cool mode
             await client.set_temperature(22, mode="cool")
 
             # Verify cool_temp_set was set
@@ -381,7 +349,7 @@ class TestGreeVersatiClientComprehensive:
             await client.async_get_data()
 
             # Set temperature with auto mode detection (heat)
-            client._data["mode"] = HEAT_MODE  # Heat mode
+            client._data["mode"] = MODE_HEAT  # Heat mode
             await client.set_temperature(48)
 
             # Verify heat_temp_set was set
@@ -392,7 +360,7 @@ class TestGreeVersatiClientComprehensive:
             mock_device.set_property.reset_mock()
 
             # Set temperature with auto mode detection (cool)
-            client._data["mode"] = COOL_MODE  # Cool mode
+            client._data["mode"] = MODE_COOL  # Cool mode
             await client.set_temperature(24)
 
             # Verify cool_temp_set was set
@@ -459,8 +427,8 @@ class TestGreeVersatiClientComprehensive:
             # Set HVAC mode to heat
             await client.set_hvac_mode("heat")
 
-            # Verify mode was set to HEAT_MODE and power was set to True
-            mock_device.set_property.assert_any_call(AwhpProps.MODE, HEAT_MODE)
+            # Verify mode was set to MODE_HEAT and power was set to True
+            mock_device.set_property.assert_any_call(AwhpProps.MODE, MODE_HEAT)
             mock_device.set_property.assert_any_call(AwhpProps.POWER, value=True)
 
             # Reset mock
@@ -469,8 +437,8 @@ class TestGreeVersatiClientComprehensive:
             # Set HVAC mode to cool
             await client.set_hvac_mode("cool")
 
-            # Verify mode was set to COOL_MODE and power was set to True
-            mock_device.set_property.assert_any_call(AwhpProps.MODE, COOL_MODE)
+            # Verify mode was set to MODE_COOL and power was set to True
+            mock_device.set_property.assert_any_call(AwhpProps.MODE, MODE_COOL)
             mock_device.set_property.assert_any_call(AwhpProps.POWER, value=True)
 
             # Reset mock

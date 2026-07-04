@@ -19,7 +19,6 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for the Gree Versati integration."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -142,5 +141,6 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_MAC: device.device_info.mac,
                 CONF_NAME: friendly_name,
                 "key": key,
+                "cipher_type": device.cipher_type,
             },
         )

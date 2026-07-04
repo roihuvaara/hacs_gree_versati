@@ -3,12 +3,11 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from gree_versati.awhp_device import AwhpDevice
-from gree_versati.deviceinfo import DeviceInfo
 from homeassistant import config_entries
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
 
 from custom_components.gree_versati.const import CONF_IP, DOMAIN
+from custom_components.gree_versati.protocol import AwhpDevice, DeviceInfo
 
 
 @pytest.mark.asyncio
@@ -24,6 +23,7 @@ async def test_form(hass):
     mock_device = MagicMock(spec=AwhpDevice)
     mock_device.device_info = mock_device_info
     mock_device.bind = AsyncMock(return_value="test_key")
+    mock_device.cipher_type = "ecb"
 
     # Mock the discovery and setup
     with (
@@ -68,4 +68,5 @@ async def test_form(hass):
         CONF_MAC: "AA:BB:CC:DD:EE:FF",
         CONF_NAME: "Test Device",
         "key": "test_key",
+        "cipher_type": "ecb",
     }

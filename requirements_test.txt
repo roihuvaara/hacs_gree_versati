@@ -1,12 +1,7 @@
-# Core test requirements
-pytest>=7.0.0
-pytest-asyncio>=0.20.0
-pytest-homeassistant-custom-component>=0.13.205
-pytest-cov>=4.0.0
-pytest-sugar>=0.9.6
-
+# Test environment. pytest-homeassistant-custom-component is pinned exactly:
+# it brings its own matched homeassistant, pytest, pytest-asyncio and
+# pytest-socket versions, and letting it float breaks fixture behavior.
+pytest-homeassistant-custom-component==0.13.316
+colorlog>=6.0
 
 pre-commit>=3.0.0
-
-# Home Assistant dev dependencies
-pytest-aiohttp>=0.3.0
