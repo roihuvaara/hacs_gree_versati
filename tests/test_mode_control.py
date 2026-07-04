@@ -163,6 +163,31 @@ async def test_set_device_mode_when_off_sets_mode_then_on():
 
 
 @pytest.mark.asyncio
+async def test_set_device_mode_updates_cache_optimistically():
+    """The client cache reflects the commanded state without a poll."""
+    from custom_components.gree_versati.client import GreeVersatiClient
+
+    client = GreeVersatiClient()
+    device = MagicMock()
+    device.set_property = MagicMock()
+    device.push_state_update = AsyncMock()
+    client.device = device
+    client._data = {"power": True, "mode": MODE_HEAT, "hot_water_temp": 50.0}
+    # Polling right after a mode change would read transitional values
+    client.async_get_data = AsyncMock(
+        side_effect=AssertionError("must not poll mid-transition")
+    )
+
+    await client.set_device_mode("heat_hot_water")
+    assert client._data["power"] is True
+    assert client._data["mode"] == 4
+    assert client._data["hot_water_temp"] == 50.0
+
+    await client.set_device_mode("off")
+    assert client._data["power"] is False
+
+
+@pytest.mark.asyncio
 async def test_set_device_mode_off_always_powers_off():
     """Selecting OFF always results in POWER False."""
     from custom_components.gree_versati.client import GreeVersatiClient

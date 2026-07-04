@@ -106,6 +106,54 @@ async def test_coordinator_first_update_retry(hass: HomeAssistant):
 
 
 @pytest.mark.asyncio
+async def test_apply_optimistic_device_mode(hass: HomeAssistant):
+    """Optimistic publish overlays expected mode state without polling."""
+    client = MagicMock()
+    # Device currently in heat + hot water
+    client.async_get_data = AsyncMock(
+        return_value={"power": True, "mode": 4, "hot_water_temp": 50.0}
+    )
+
+    config_entry = MagicMock()
+    config_entry.state = ConfigEntryState.SETUP_IN_PROGRESS
+    config_entry.runtime_data = MagicMock()
+    config_entry.runtime_data.client = client
+
+    with patch("asyncio.sleep", new=AsyncMock()):
+        coordinator = GreeVersatiDataUpdateCoordinator(
+            hass=hass,
+            name=DOMAIN,
+            logger=LOGGER,
+            update_interval=timedelta(seconds=30),
+            config_entry=config_entry,
+        )
+        await coordinator.async_config_entry_first_refresh()
+
+        # User turns DHW off -> device goes to heat only; publish that
+        # instead of polling the mid-transition unit
+        coordinator.async_apply_optimistic_device_mode("heat")
+
+        assert coordinator.data["power"] is True
+        assert coordinator.data["mode"] == 1
+        # Untouched values survive the overlay
+        assert coordinator.data["hot_water_temp"] == 50.0
+        # No extra device poll happened
+        assert client.async_get_data.call_count == 1
+
+        # Turning fully off publishes power only, mode untouched
+        coordinator.async_apply_optimistic_device_mode("off")
+        assert coordinator.data["power"] is False
+        assert coordinator.data["mode"] == 1
+
+        # Extra changes (e.g. the DHW boost flag) ride along
+        coordinator.async_apply_optimistic_device_mode(
+            "heat_hot_water", fast_heat_water=True
+        )
+        assert coordinator.data["mode"] == 4
+        assert coordinator.data["fast_heat_water"] is True
+
+
+@pytest.mark.asyncio
 async def test_coordinator_entity_update(hass: HomeAssistant):
     """Test that entities get updated when the coordinator updates."""
     # Create a mock client with an async_get_data method

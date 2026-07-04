@@ -75,7 +75,10 @@ class GreeVersatiClient:
 
         try:
             LOGGER.debug("Starting data fetch from device")
-            raw_data = await self.device.get_all_properties()
+            # Never poll mid mode-change: the unit power-cycles while
+            # switching Mod and would report transitional values
+            async with self._mode_change_lock:
+                raw_data = await self.device.get_all_properties()
             LOGGER.debug("Raw data from device: %s", raw_data)
 
             # Add debug logging for each temperature calculation
@@ -288,7 +291,9 @@ class GreeVersatiClient:
             if target_mod is None:
                 self.device.set_property(AwhpProps.POWER, value=False)
                 await self.device.push_state_update()
-                await self.async_get_data()
+                # Optimistic cache update; the unit reports transitional
+                # values right after a command, so polling now would lie
+                self._data = {**self._data, "power": False}
                 return
 
             if current_mod != target_mod:
@@ -303,4 +308,4 @@ class GreeVersatiClient:
 
             self.device.set_property(AwhpProps.POWER, value=True)
             await self.device.push_state_update()
-            await self.async_get_data()
+            self._data = {**self._data, "power": True, "mode": target_mod}

@@ -62,4 +62,6 @@ class GreeVersatiDeviceModeSelect(GreeVersatiEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Change the selected option (device mode)."""
         await self._client.set_device_mode(option)
-        await self.coordinator.async_request_refresh()
+        # Publish the expected state; the unit reports transitional values
+        # right after a mode change, so an immediate poll would lie
+        self.coordinator.async_apply_optimistic_device_mode(option)

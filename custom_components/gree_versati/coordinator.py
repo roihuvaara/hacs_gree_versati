@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import LOGGER
+from .const import DEVICE_MODE_TO_MOD, LOGGER
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -27,6 +27,33 @@ class GreeVersatiDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     config_entry: ConfigEntry
     _first_update_done: bool = False
+
+    def async_apply_optimistic(self, **changes: Any) -> None:
+        """
+        Overlay expected values on the current data and notify entities.
+
+        Publishing the known outcome of a command avoids polling the unit
+        while it is still transitioning; async_set_updated_data also
+        pushes the next scheduled poll a full interval out, by which time
+        the unit reports settled values.
+        """
+        self.async_set_updated_data({**(self.data or {}), **changes})
+
+    def async_apply_optimistic_device_mode(
+        self, device_mode: str, **extra: Any
+    ) -> None:
+        """
+        Publish the expected outcome of a combined device-mode change.
+
+        The unit power-cycles while changing Mod and briefly reports
+        transitional values (e.g. Pow=0), which would flash wrong states
+        in the UI — like space heating showing off after a DHW change.
+        """
+        mod = DEVICE_MODE_TO_MOD[device_mode]
+        changes: dict[str, Any] = {"power": mod is not None, **extra}
+        if mod is not None:
+            changes["mode"] = mod
+        self.async_apply_optimistic(**changes)
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Update data via library."""

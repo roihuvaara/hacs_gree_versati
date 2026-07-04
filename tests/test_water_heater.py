@@ -196,8 +196,10 @@ class TestGreeVersatiWaterHeater:
         # Verify client.set_dhw_temperature was called with correct parameters
         client.set_dhw_temperature.assert_called_once_with(60.0)
 
-        # Verify coordinator.async_request_refresh was called
-        coordinator.async_request_refresh.assert_called_once()
+        # The new setpoint is published optimistically
+        coordinator.async_apply_optimistic.assert_called_once_with(
+            hot_water_temp_set=60
+        )
 
     @pytest.mark.asyncio
     async def test_async_set_temperature_no_temp(self):
@@ -251,8 +253,10 @@ class TestGreeVersatiWaterHeater:
         # Performance additionally sets the FastHtWter boost flag
         client.set_dhw_mode.assert_awaited_once_with("performance")
 
-        # Verify coordinator.async_request_refresh was called
-        coordinator.async_request_refresh.assert_called_once()
+        # Expected state is published optimistically instead of polling
+        coordinator.async_apply_optimistic_device_mode.assert_called_once_with(
+            "hot_water", fast_heat_water=True
+        )
 
     def test_min_temp(self):
         """Test min_temp property."""

@@ -100,7 +100,7 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
         await self._client.set_dhw_temperature(temperature)
-        await self.coordinator.async_request_refresh()
+        self.coordinator.async_apply_optimistic(hot_water_temp_set=int(temperature))
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
@@ -126,6 +126,7 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         await self._client.set_device_mode(combined)
 
         # FastHtWter is only the boost flag, never the DHW on/off switch
+        extra = {}
         if operation_mode != OPERATION_MODE_OFF:
             dhw_boost = (
                 "performance"
@@ -133,8 +134,11 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
                 else "normal"
             )
             await self._client.set_dhw_mode(dhw_boost)
+            extra["fast_heat_water"] = dhw_boost == "performance"
 
-        await self.coordinator.async_request_refresh()
+        # Publish the expected state; the unit reports transitional values
+        # right after a mode change, so an immediate poll would lie
+        self.coordinator.async_apply_optimistic_device_mode(combined, **extra)
 
     async def async_turn_on(self, **kwargs: Any) -> None:  # noqa: ARG002
         """Turn DHW on in normal (heat pump) operation."""

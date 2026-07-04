@@ -366,8 +366,8 @@ class TestGreeVersatiClimate:
         # Verify combined device mode was called correctly
         client.set_device_mode.assert_awaited_once_with("heat")
 
-        # Verify coordinator.async_request_refresh was called
-        coordinator.async_request_refresh.assert_called_once()
+        # Expected state is published optimistically instead of polling
+        coordinator.async_apply_optimistic_device_mode.assert_called_once_with("heat")
 
     @pytest.mark.asyncio
     async def test_async_setup_entry(self):

@@ -131,6 +131,10 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
             mode = "cool"
 
         await self._client.set_temperature(temperature, mode=mode)
+        if mode is not None:
+            self.coordinator.async_apply_optimistic(
+                **{f"{mode}_temp_set": int(temperature)}
+            )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
@@ -150,4 +154,6 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
             combined = "off"
 
         await self._client.set_device_mode(combined)
-        await self.coordinator.async_request_refresh()
+        # Publish the expected state; the unit reports transitional values
+        # right after a mode change, so an immediate poll would lie
+        self.coordinator.async_apply_optimistic_device_mode(combined)

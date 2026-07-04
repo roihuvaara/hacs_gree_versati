@@ -68,7 +68,9 @@ async def test_climate_async_set_hvac_mode_combines_to_device_mode(
     coordinator.config_entry.runtime_data.client.set_device_mode.assert_awaited_once_with(
         expected
     )
-    coordinator.async_request_refresh.assert_awaited_once()
+    # Expected state is published optimistically instead of polling the
+    # unit mid-transition
+    coordinator.async_apply_optimistic_device_mode.assert_called_once_with(expected)
 
 
 @pytest.mark.asyncio
@@ -114,6 +116,9 @@ async def test_water_heater_async_set_operation_mode_combines(
     client.set_device_mode.assert_awaited_once_with(expected)
     if expected_boost is None:
         client.set_dhw_mode.assert_not_awaited()
+        coordinator.async_apply_optimistic_device_mode.assert_called_once_with(expected)
     else:
         client.set_dhw_mode.assert_awaited_once_with(expected_boost)
-    coordinator.async_request_refresh.assert_awaited_once()
+        coordinator.async_apply_optimistic_device_mode.assert_called_once_with(
+            expected, fast_heat_water=expected_boost == "performance"
+        )

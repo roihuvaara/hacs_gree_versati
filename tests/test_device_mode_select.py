@@ -53,7 +53,8 @@ async def test_select_calls_client_on_choose():
     coordinator.config_entry.runtime_data.client.set_device_mode.assert_awaited_once_with(
         "hot_water"
     )
-    coordinator.async_request_refresh.assert_awaited_once()
+    # Expected state is published optimistically instead of polling
+    coordinator.async_apply_optimistic_device_mode.assert_called_once_with("hot_water")
 
 
 @pytest.mark.asyncio
