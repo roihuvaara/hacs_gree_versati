@@ -25,8 +25,10 @@ if TYPE_CHECKING:
     from .data import GreeVersatiConfigEntry
 
 PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
     Platform.CLIMATE,
     Platform.SELECT,
+    Platform.SENSOR,
     Platform.WATER_HEATER,
 ]
 

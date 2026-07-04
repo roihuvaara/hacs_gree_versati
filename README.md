@@ -24,6 +24,8 @@ This integration enables connection with Gree Versati Air to Water Heat Pumps in
 | Climate | Water-out setpoint (heating 20–60 °C, cooling 7–25 °C), Mode selection (Heat/Cool/Off) |
 | Water Heater | Tank setpoint (40–80 °C), Operation (Off/Heat pump/Performance boost) |
 | Select | Direct device mode: off, heat, cool, hot water, heat+hot water, cool+hot water |
+| Sensors | Hot water, water outlet/inlet and heat-exchanger temperatures (with long-term statistics for history graphs) |
+| Binary sensors | Tank heater, auxiliary heaters 1/2, defrosting and frost protection running states (diagnostic) |
 
 Mode changes follow the device's requirement of switching power off
 before changing mode (the official app does the same), so a brief

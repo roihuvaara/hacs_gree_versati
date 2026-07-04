@@ -47,6 +47,37 @@
                     "heat_hot_water": "Heat + hot water"
                 }
             }
+        },
+        "sensor": {
+            "hot_water_temp": {
+                "name": "Hot water temperature"
+            },
+            "water_out_temp": {
+                "name": "Water outlet temperature"
+            },
+            "water_in_temp": {
+                "name": "Water inlet temperature"
+            },
+            "opt_water_temp": {
+                "name": "Heat exchanger water temperature"
+            }
+        },
+        "binary_sensor": {
+            "tank_heater_status": {
+                "name": "Tank heater"
+            },
+            "hp_heater_1_status": {
+                "name": "Auxiliary heater 1"
+            },
+            "hp_heater_2_status": {
+                "name": "Auxiliary heater 2"
+            },
+            "defrosting_status": {
+                "name": "Defrosting"
+            },
+            "frost_protection": {
+                "name": "Frost protection"
+            }
         }
     }
 }
