@@ -29,6 +29,7 @@ ignore = [
 [lint.per-file-ignores]
 # HA platform modules must be named after their platform
 "custom_components/gree_versati/select.py" = ["A005"]
+"run_tests.py" = ["PLC0415"]
 "tests/**/*.py" = [
     "S101",      # Use of `assert` detected (fine in tests)
     "ANN001",    # Missing type annotation for function argument
@@ -50,6 +51,10 @@ ignore = [
     "C901",      # Function is too complex (test fixtures often have complex setup)
     "PLR0915",   # Too many statements (test fixtures often need many setup steps)
     "FBT002",    # Boolean default positional argument in function definition
+    "PLC0415",   # Imports at point of use (intentional: patch-then-import pattern)
+    "ANN002",    # Missing *args annotation (mock recorder helpers)
+    "ANN003",    # Missing **kwargs annotation (mock recorder helpers)
+    "PT006",     # parametrize argnames as string (established style here)
 ]
 
 [lint.flake8-pytest-style]

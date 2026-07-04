@@ -79,9 +79,7 @@ class GcmCipher:
 
     def encrypt(self, obj: dict[str, Any]) -> tuple[str, str]:
         """Encrypt a pack dict; returns (base64 payload, base64 tag)."""
-        encryptor = Cipher(
-            algorithms.AES(self._key), modes.GCM(GCM_NONCE)
-        ).encryptor()
+        encryptor = Cipher(algorithms.AES(self._key), modes.GCM(GCM_NONCE)).encryptor()
         encryptor.authenticate_additional_data(GCM_AAD)
         encrypted = encryptor.update(json.dumps(obj).encode()) + encryptor.finalize()
         return (

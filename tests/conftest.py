@@ -1,6 +1,7 @@
 """Test fixtures for pytest compatibility."""
 
 import asyncio
+import contextlib
 import logging
 import sys
 from pathlib import Path
@@ -33,11 +34,9 @@ def disable_asyncio_debug():
         old_debug = None
     yield
     if old_debug is not None:
-        try:
+        # pytest-asyncio may already have closed the loop; nothing to restore
+        with contextlib.suppress(RuntimeError):
             asyncio.get_event_loop().set_debug(old_debug)
-        except RuntimeError:
-            # pytest-asyncio already closed the loop; nothing to restore
-            pass
 
 
 @pytest.fixture(autouse=True)

@@ -100,9 +100,7 @@ class AwhpProps(enum.Enum):
     EVU = "EVU"
 
 
-def _split_temp_to_celsius(
-    whole: float | None, decimal: float | None
-) -> float | None:
+def _split_temp_to_celsius(whole: float | None, decimal: float | None) -> float | None:
     """Combine a Hi/Lo temperature pair into celsius."""
     if whole is None or decimal is None:
         return None
@@ -191,9 +189,7 @@ class AwhpDevice:
 
         for kind in kinds:
             try:
-                response = await self._request(
-                    pack, create_cipher(kind), generic=True
-                )
+                response = await self._request(pack, create_cipher(kind), generic=True)
             except (GreeTimeoutError, GreeProtocolError, ValueError) as err:
                 _LOGGER.debug("Bind with %s cipher failed: %s", kind, err)
                 last_error = err
@@ -202,9 +198,7 @@ class AwhpDevice:
             if response.get("t") == "bindok" and response.get("key"):
                 self.key = response["key"]
                 self.cipher_type = kind
-                _LOGGER.debug(
-                    "Bound to %s using %s cipher", self.device_info, kind
-                )
+                _LOGGER.debug("Bound to %s using %s cipher", self.device_info, kind)
                 return self.key
 
             _LOGGER.debug("Unexpected bind response: %s", response)
@@ -280,17 +274,13 @@ class AwhpDevice:
             source.get(whole_prop.value), source.get(decimal_prop.value)
         )
 
-    def t_water_in_pe(
-        self, raw_data: dict[str, Any] | None = None
-    ) -> float | None:
+    def t_water_in_pe(self, raw_data: dict[str, Any] | None = None) -> float | None:
         """Water inlet temperature in celsius."""
         return self._pair(
             AwhpProps.T_WATER_IN_PE_W, AwhpProps.T_WATER_IN_PE_D, raw_data
         )
 
-    def t_water_out_pe(
-        self, raw_data: dict[str, Any] | None = None
-    ) -> float | None:
+    def t_water_out_pe(self, raw_data: dict[str, Any] | None = None) -> float | None:
         """Water outlet temperature in celsius."""
         return self._pair(
             AwhpProps.T_WATER_OUT_PE_W, AwhpProps.T_WATER_OUT_PE_D, raw_data
@@ -298,21 +288,15 @@ class AwhpDevice:
 
     def t_opt_water(self, raw_data: dict[str, Any] | None = None) -> float | None:
         """Heat-exchanger outlet water temperature in celsius."""
-        return self._pair(
-            AwhpProps.T_OPT_WATER_W, AwhpProps.T_OPT_WATER_D, raw_data
-        )
+        return self._pair(AwhpProps.T_OPT_WATER_W, AwhpProps.T_OPT_WATER_D, raw_data)
 
-    def hot_water_temp(
-        self, raw_data: dict[str, Any] | None = None
-    ) -> float | None:
+    def hot_water_temp(self, raw_data: dict[str, Any] | None = None) -> float | None:
         """DHW tank temperature in celsius."""
         return self._pair(
             AwhpProps.HOT_WATER_TEMP_W, AwhpProps.HOT_WATER_TEMP_D, raw_data
         )
 
-    def remote_home_temp(
-        self, raw_data: dict[str, Any] | None = None
-    ) -> float | None:
+    def remote_home_temp(self, raw_data: dict[str, Any] | None = None) -> float | None:
         """Remote room sensor temperature in celsius."""
         return self._pair(
             AwhpProps.REMOTE_HOME_TEMP_W, AwhpProps.REMOTE_HOME_TEMP_D, raw_data

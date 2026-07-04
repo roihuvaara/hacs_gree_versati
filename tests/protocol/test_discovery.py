@@ -18,9 +18,7 @@ async def test_search_finds_device(cipher_kind):
     unit = FakeVersati(cipher_kind=cipher_kind)
     ip, port = await unit.start()
     try:
-        devices = await search_devices(
-            wait_for=0.5, port=port, broadcast_address=ip
-        )
+        devices = await search_devices(wait_for=0.5, port=port, broadcast_address=ip)
         assert len(devices) == 1
         info = devices[0]
         assert info.mac == unit.mac

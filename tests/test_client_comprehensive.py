@@ -1,4 +1,4 @@
-﻿"""Comprehensive tests for the GreeVersatiClient class."""
+"""Comprehensive tests for the GreeVersatiClient class."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
 

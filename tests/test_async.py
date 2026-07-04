@@ -1,4 +1,4 @@
-﻿"""Async tests for the gree_versati integration."""
+"""Async tests for the gree_versati integration."""
 
 import asyncio
 import unittest
