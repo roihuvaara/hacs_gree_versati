@@ -9,6 +9,7 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.exceptions import ServiceValidationError
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -18,6 +19,8 @@ if TYPE_CHECKING:
     from .data import GreeVersatiConfigEntry
 
 from .const import (
+    CONF_DHW_TEMP_MAX,
+    CONF_DHW_TEMP_MIN,
     COOLING_MODES,
     DHW_MODES,
     DHW_TEMP_MAX,
@@ -99,6 +102,14 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
         """Set new target temperature."""
         if (temperature := kwargs.get(ATTR_TEMPERATURE)) is None:
             return
+        # Unlike climate, the water_heater component does not validate the
+        # target against min/max, so enforce the configured limits here
+        if not self.min_temp <= temperature <= self.max_temp:
+            msg = (
+                f"Target temperature {temperature}°C is outside the allowed "
+                f"range {self.min_temp:.0f}-{self.max_temp:.0f}°C"
+            )
+            raise ServiceValidationError(msg)
         await self._client.set_dhw_temperature(temperature)
         self.coordinator.async_apply_optimistic(hot_water_temp_set=int(temperature))
 
@@ -151,9 +162,15 @@ class GreeVersatiWaterHeater(GreeVersatiEntity, WaterHeaterEntity):
     @property
     def min_temp(self) -> float:
         """Return the minimum allowed temperature."""
-        return DHW_TEMP_MIN
+        value = self.coordinator.config_entry.options.get(
+            CONF_DHW_TEMP_MIN, DHW_TEMP_MIN
+        )
+        return min(max(value, DHW_TEMP_MIN), DHW_TEMP_MAX)
 
     @property
     def max_temp(self) -> float:
         """Return the maximum allowed temperature."""
-        return DHW_TEMP_MAX
+        value = self.coordinator.config_entry.options.get(
+            CONF_DHW_TEMP_MAX, DHW_TEMP_MAX
+        )
+        return min(max(value, DHW_TEMP_MIN), DHW_TEMP_MAX)

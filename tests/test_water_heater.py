@@ -178,6 +178,7 @@ class TestGreeVersatiWaterHeater:
         # Create a mock coordinator
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {}
         coordinator.async_request_refresh = AsyncMock()
 
         # Create a mock client and wire it via runtime_data
@@ -263,6 +264,7 @@ class TestGreeVersatiWaterHeater:
         # Create a mock coordinator
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {}
 
         # Create a mock client and wire it via runtime_data
         client = MagicMock()
@@ -281,6 +283,7 @@ class TestGreeVersatiWaterHeater:
         # Create a mock coordinator
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {}
 
         # Create a mock client and wire it via runtime_data
         client = MagicMock()
@@ -293,6 +296,61 @@ class TestGreeVersatiWaterHeater:
 
         # Verify max temperature
         assert water_heater.max_temp == 80.0
+
+    def test_temp_limits_from_options(self):
+        """User-configured options tighten the DHW setpoint range."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {"dhw_temp_min": 45, "dhw_temp_max": 65}
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        water_heater = GreeVersatiWaterHeater(coordinator)
+
+        assert water_heater.min_temp == 45
+        assert water_heater.max_temp == 65
+
+    def test_temp_limits_options_clamped_to_device_range(self):
+        """Out-of-range stored options are clamped to the device limits."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {"dhw_temp_min": 10, "dhw_temp_max": 95}
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        water_heater = GreeVersatiWaterHeater(coordinator)
+
+        assert water_heater.min_temp == 40
+        assert water_heater.max_temp == 80
+
+    @pytest.mark.asyncio
+    async def test_async_set_temperature_rejects_out_of_range(self):
+        """A setpoint outside the configured range raises and is not sent."""
+        from homeassistant.exceptions import ServiceValidationError
+
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {"dhw_temp_max": 65}
+
+        client = MagicMock()
+        client.set_dhw_temperature = AsyncMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        water_heater = GreeVersatiWaterHeater(coordinator)
+
+        with pytest.raises(ServiceValidationError):
+            await water_heater.async_set_temperature(**{ATTR_TEMPERATURE: 70.0})
+
+        client.set_dhw_temperature.assert_not_called()
+        coordinator.async_apply_optimistic.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_async_setup_entry(self):

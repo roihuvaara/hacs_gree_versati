@@ -236,6 +236,7 @@ class TestGreeVersatiClimate:
         """Heating water-out setpoint range is 20-60 (not HA's default 7-35)."""
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {}
         coordinator.data = {"power": True, "mode": 1}  # Heat
 
         client = MagicMock()
@@ -252,6 +253,7 @@ class TestGreeVersatiClimate:
         """Cooling water-out setpoint range is 7-25."""
         coordinator = MagicMock()
         coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {}
         coordinator.data = {"power": True, "mode": 5}  # Cool
 
         client = MagicMock()
@@ -263,6 +265,52 @@ class TestGreeVersatiClimate:
 
         assert climate.min_temp == 7
         assert climate.max_temp == 25
+
+    def test_temp_limits_from_options(self):
+        """User-configured options tighten the heat and cool setpoint ranges."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {
+            "heat_temp_min": 25,
+            "heat_temp_max": 55,
+            "cool_temp_min": 10,
+            "cool_temp_max": 20,
+        }
+        coordinator.data = {"power": True, "mode": 1}  # Heat
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        climate = GreeVersatiClimate(coordinator)
+
+        assert climate.min_temp == 25
+        assert climate.max_temp == 55
+
+        coordinator.data = {"power": True, "mode": 5}  # Cool
+        assert climate.min_temp == 10
+        assert climate.max_temp == 20
+
+    def test_temp_limits_options_clamped_to_device_range(self):
+        """Out-of-range stored options are clamped to the device limits."""
+        coordinator = MagicMock()
+        coordinator.config_entry.entry_id = "test_entry_id"
+        coordinator.config_entry.options = {
+            "heat_temp_min": 5,  # below device min 20
+            "heat_temp_max": 90,  # above device max 60
+        }
+        coordinator.data = {"power": True, "mode": 1}  # Heat
+
+        client = MagicMock()
+        runtime_data = MagicMock()
+        runtime_data.client = client
+        coordinator.config_entry.runtime_data = runtime_data
+
+        climate = GreeVersatiClimate(coordinator)
+
+        assert climate.min_temp == 20
+        assert climate.max_temp == 60
 
     @pytest.mark.asyncio
     async def test_async_set_temperature_heat(self):

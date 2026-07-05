@@ -1,24 +1,70 @@
 """Configuration flow for Gree Versati integration."""
 
+from __future__ import annotations
+
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_MAC, CONF_NAME, CONF_PORT
+from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
 
 from .client import GreeVersatiClient
-from .const import CONF_IP, DOMAIN
+from .const import (
+    CONF_COOL_TEMP_MAX,
+    CONF_COOL_TEMP_MIN,
+    CONF_DHW_TEMP_MAX,
+    CONF_DHW_TEMP_MIN,
+    CONF_HEAT_TEMP_MAX,
+    CONF_HEAT_TEMP_MIN,
+    CONF_IP,
+    COOL_TEMP_MAX,
+    COOL_TEMP_MIN,
+    DHW_TEMP_MAX,
+    DHW_TEMP_MIN,
+    DOMAIN,
+    HEAT_TEMP_MAX,
+    HEAT_TEMP_MIN,
+)
 from .naming import sanitize_device_name
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigFlowResult
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def _temperature_selector(low: int, high: int) -> NumberSelector:
+    """Build a °C number box limited to the device's own range."""
+    return NumberSelector(
+        NumberSelectorConfig(
+            min=low,
+            max=high,
+            step=1,
+            unit_of_measurement="°C",
+            mode=NumberSelectorMode.BOX,
+        )
+    )
 
 
 class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for the Gree Versati integration."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,  # noqa: ARG004
+    ) -> GreeVersatiOptionsFlow:
+        """Create the options flow."""
+        return GreeVersatiOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -143,4 +189,49 @@ class GreeVersatiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "key": key,
                 "cipher_type": device.cipher_type,
             },
+        )
+
+
+# (option key, device min, device max) for each configurable setpoint range
+_LIMIT_RANGES = [
+    (CONF_HEAT_TEMP_MIN, CONF_HEAT_TEMP_MAX, HEAT_TEMP_MIN, HEAT_TEMP_MAX, "heat"),
+    (CONF_COOL_TEMP_MIN, CONF_COOL_TEMP_MAX, COOL_TEMP_MIN, COOL_TEMP_MAX, "cool"),
+    (CONF_DHW_TEMP_MIN, CONF_DHW_TEMP_MAX, DHW_TEMP_MIN, DHW_TEMP_MAX, "dhw"),
+]
+
+
+class GreeVersatiOptionsFlow(config_entries.OptionsFlow):
+    """Options flow for tightening the settable temperature ranges."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the temperature limit options."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            # NumberSelector returns floats; store whole degrees
+            data = {key: int(value) for key, value in user_input.items()}
+            for min_key, max_key, _, _, label in _LIMIT_RANGES:
+                if data[min_key] > data[max_key]:
+                    errors["base"] = f"{label}_min_above_max"
+                    break
+            else:
+                return self.async_create_entry(title="", data=data)
+
+        options = self.config_entry.options
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    key,
+                    default=options.get(key, default),
+                ): _temperature_selector(low, high)
+                for min_key, max_key, low, high, _ in _LIMIT_RANGES
+                for key, default in ((min_key, low), (max_key, high))
+            }
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=schema,
+            errors=errors,
         )

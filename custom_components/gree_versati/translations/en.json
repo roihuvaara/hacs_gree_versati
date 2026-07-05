@@ -24,6 +24,27 @@
             "invalid_device": "Invalid device selection"
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Temperature limits",
+                "description": "Tighten the temperature ranges offered by the climate and water heater entities. Use this to prevent accidental extreme setpoints; the device's own limits still apply.",
+                "data": {
+                    "heat_temp_min": "Heating minimum temperature",
+                    "heat_temp_max": "Heating maximum temperature",
+                    "cool_temp_min": "Cooling minimum temperature",
+                    "cool_temp_max": "Cooling maximum temperature",
+                    "dhw_temp_min": "Hot water minimum temperature",
+                    "dhw_temp_max": "Hot water maximum temperature"
+                }
+            }
+        },
+        "error": {
+            "heat_min_above_max": "Heating minimum temperature must not be above the maximum",
+            "cool_min_above_max": "Cooling minimum temperature must not be above the maximum",
+            "dhw_min_above_max": "Hot water minimum temperature must not be above the maximum"
+        }
+    },
     "entity": {
         "climate": {
             "space_heating": {

@@ -55,6 +55,16 @@ off/on cycle during mode changes is expected.
 3. The integration will scan your network for devices
 4. Select your device to complete setup
 
+### Temperature limits
+
+The device itself accepts wide setpoint ranges (heating 20–60 °C, cooling
+7–25 °C, hot water 40–80 °C). To guard against accidental extreme setpoints,
+you can tighten these ranges: open the integration's **Configure** dialog
+(Settings → Devices & Services → Gree Versati → Configure) and set your own
+minimum/maximum for heating, cooling, and hot water. The climate and water
+heater entities then refuse setpoints outside your configured range. Limits
+can only be tightened — values outside the device's own range are ignored.
+
 ## Troubleshooting
 
 Enable debug logging by adding to your `configuration.yaml`:

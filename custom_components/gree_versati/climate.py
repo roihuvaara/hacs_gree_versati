@@ -12,6 +12,10 @@ from homeassistant.components.climate.const import (
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
 from .const import (
+    CONF_COOL_TEMP_MAX,
+    CONF_COOL_TEMP_MIN,
+    CONF_HEAT_TEMP_MAX,
+    CONF_HEAT_TEMP_MIN,
     COOL_TEMP_MAX,
     COOL_TEMP_MIN,
     COOLING_MODES,
@@ -104,19 +108,34 @@ class GreeVersatiClimate(GreeVersatiEntity, ClimateEntity):
         # hot-water-only (Mod=2): no space heating/cooling running
         return HVACMode.OFF
 
+    def _configured_limit(
+        self, option_key: str, default: int, low: int, high: int
+    ) -> float:
+        """Return the user-tightened limit, kept within the device range."""
+        value = self.coordinator.config_entry.options.get(option_key, default)
+        return min(max(value, low), high)
+
     @property
     def min_temp(self) -> float:
         """Return the minimum settable water-out temperature."""
         if self.hvac_mode == HVACMode.COOL:
-            return COOL_TEMP_MIN
-        return HEAT_TEMP_MIN
+            return self._configured_limit(
+                CONF_COOL_TEMP_MIN, COOL_TEMP_MIN, COOL_TEMP_MIN, COOL_TEMP_MAX
+            )
+        return self._configured_limit(
+            CONF_HEAT_TEMP_MIN, HEAT_TEMP_MIN, HEAT_TEMP_MIN, HEAT_TEMP_MAX
+        )
 
     @property
     def max_temp(self) -> float:
         """Return the maximum settable water-out temperature."""
         if self.hvac_mode == HVACMode.COOL:
-            return COOL_TEMP_MAX
-        return HEAT_TEMP_MAX
+            return self._configured_limit(
+                CONF_COOL_TEMP_MAX, COOL_TEMP_MAX, COOL_TEMP_MIN, COOL_TEMP_MAX
+            )
+        return self._configured_limit(
+            CONF_HEAT_TEMP_MAX, HEAT_TEMP_MAX, HEAT_TEMP_MIN, HEAT_TEMP_MAX
+        )
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""

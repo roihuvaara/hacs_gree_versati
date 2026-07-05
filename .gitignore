@@ -17,3 +17,5 @@ external/*
 # Home Assistant configuration
 config/*
 !config/configuration.yaml
+# Playwright MCP browser artifacts
+.playwright-mcp/

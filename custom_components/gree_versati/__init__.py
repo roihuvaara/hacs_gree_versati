@@ -108,8 +108,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: GreeVersatiConfigEntry) 
     LOGGER.debug("Setting up platforms")
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Reload the entry when options (temperature limits) change
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+
     LOGGER.debug("Gree Versati integration setup complete")
     return True
+
+
+async def async_reload_entry(
+    hass: HomeAssistant, entry: GreeVersatiConfigEntry
+) -> None:
+    """Reload the config entry after an options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(

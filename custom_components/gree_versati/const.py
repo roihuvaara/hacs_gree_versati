@@ -43,6 +43,15 @@ COOL_TEMP_MAX = 25
 DHW_TEMP_MIN = 40
 DHW_TEMP_MAX = 80
 
+# Config entry options: user-tightened setpoint limits. Values are always
+# kept within the device limits above; absent option = device limit.
+CONF_HEAT_TEMP_MIN = "heat_temp_min"
+CONF_HEAT_TEMP_MAX = "heat_temp_max"
+CONF_COOL_TEMP_MIN = "cool_temp_min"
+CONF_COOL_TEMP_MAX = "cool_temp_max"
+CONF_DHW_TEMP_MIN = "dhw_temp_min"
+CONF_DHW_TEMP_MAX = "dhw_temp_max"
+
 # Water heater operation modes. Values match HA's water_heater state
 # strings (STATE_OFF / STATE_HEAT_PUMP / STATE_PERFORMANCE).
 # "off": no DHW in the device mode; "heat_pump": normal DHW;
