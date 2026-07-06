@@ -1,7 +1,7 @@
 # Test environment. pytest-homeassistant-custom-component is pinned exactly:
 # it brings its own matched homeassistant, pytest, pytest-asyncio and
 # pytest-socket versions, and letting it float breaks fixture behavior.
-pytest-homeassistant-custom-component==0.13.316
+pytest-homeassistant-custom-component==0.13.345
 colorlog>=6.0
 
 pre-commit>=3.0.0
