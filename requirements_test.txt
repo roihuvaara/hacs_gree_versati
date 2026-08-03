@@ -2,6 +2,6 @@
 # it brings its own matched homeassistant, pytest, pytest-asyncio and
 # pytest-socket versions, and letting it float breaks fixture behavior.
 pytest-homeassistant-custom-component==0.13.316
-colorlog>=6.0
+colorlog>=6.12.0
 
 pre-commit>=3.0.0
